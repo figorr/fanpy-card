@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/figorr/fan-custom-card/compare/v1.0.0...v1.0.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* fix hacs.json ([4750fc3](https://github.com/figorr/fan-custom-card/commit/4750fc3ea164fb08ae900e58e7d4ee1d80fd0e47))
+* update README ([6eb15c2](https://github.com/figorr/fan-custom-card/commit/6eb15c2430c6fb74942933e46751057799f9e567))
+
 # 1.0.0 (2026-06-29)
 
 
