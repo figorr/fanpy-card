@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/figorr/fan-custom-card/compare/v1.0.1...v1.0.2) (2026-06-29)
+
+
+### Bug Fixes
+
+* add issues write permission and update actions to v4 ([d713ecb](https://github.com/figorr/fan-custom-card/commit/d713ecbc6f86288d79e828cfe12a4b484a2b4143))
+* update README image path to match actual file ([150afc0](https://github.com/figorr/fan-custom-card/commit/150afc0024afb71ddfdc05e418d3093542b79189))
+
 ## [1.0.1](https://github.com/figorr/fan-custom-card/compare/v1.0.0...v1.0.1) (2026-06-29)
 
 
