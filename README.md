@@ -108,7 +108,7 @@ The card renders a compact control panel for the fan:
 
 ```
 ┌─────────────────────────────┐
-│ 🌀 SALÓN             ● ON  │
+│ 🌀 SALÓN             ● ON   │
 │                             │
 │ LUZ                         │
 │          [💡]               │
@@ -129,6 +129,8 @@ The card renders a compact control panel for the fan:
 - The fan icon spins when the fan is ON, with speed depending on the selected velocity.
 - Active speed is highlighted with the theme accent color.
 - Light button shows yellow when light is on.
+
+![Fan Custom Card Example](images/fan_custom_card.png)
 
 ## Development
 
