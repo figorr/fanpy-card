@@ -5,8 +5,6 @@
 
 Custom Lovelace card for Home Assistant to control ceiling fans with light and speed settings.
 
-![Fan Custom Card Banner](images/fan_custom_card.png)
-
 ## Features
 
 - ✅ Control fan power (on/off)
