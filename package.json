@@ -1,0 +1,37 @@
+{
+  "name": "fan-custom-card",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Custom Lovelace card to control ceiling fans with light and speed",
+  "main": "dist/fan-custom-card.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && rollup -c",
+    "watch": "rollup -c -w",
+    "lint": "eslint src/**/*.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "fan",
+    "fan-control"
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
+    "eslint": "^8.49.0",
+    "rimraf": "^5.0.10",
+    "rollup": "^3.29.5",
+    "semantic-release": "^24.2.9"
+  }
+}

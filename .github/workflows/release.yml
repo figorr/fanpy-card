@@ -1,0 +1,77 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Configure Git author
+        run: |
+          git config user.name "semantic-release-bot"
+          git config user.email "semantic-release-bot@users.noreply.github.com"
+
+      - name: Run semantic-release
+        id: semantic_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+      - name: Get release tag
+        id: get_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LATEST_TAG" ]; then
+            echo "release_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          else
+            echo "release_tag=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare HACS folder structure
+        if: steps.get_tag.outputs.release_tag != ''
+        run: |
+          rm -rf tmp
+          mkdir -p tmp/fan-custom-card
+          cp dist/fan-custom-card.js tmp/fan-custom-card/
+          cp dist/fan-custom-card-editor.js tmp/fan-custom-card/
+          cp -r src/translations tmp/fan-custom-card/
+
+      - name: Create ZIP
+        if: steps.get_tag.outputs.release_tag != ''
+        run: |
+          cd tmp
+          zip -r ../fan-custom-card.zip fan-custom-card
+          cd ..
+
+      - name: Upload ZIP to release
+        if: steps.get_tag.outputs.release_tag != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          files: fan-custom-card.zip
+          tag_name: ${{ steps.get_tag.outputs.release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,19 @@
+{
+  "branches": ["master"],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    ["@semantic-release/changelog", { "changelogFile": "CHANGELOG.md" }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "bash ./scripts/update_version.sh ${nextRelease.version}"
+    }],
+    ["@semantic-release/git", {
+      "assets": ["CHANGELOG.md", "package.json", "package-lock.json", "hacs.json"],
+      "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    ["@semantic-release/github", {
+      "assets": ["dist/fan-custom-card.js", "dist/fan-custom-card-editor.js"]
+    }]
+  ],
+  "repositoryUrl": "https://github.com/figorr/fan-custom-card"
+}
