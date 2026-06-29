@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/figorr/fan-custom-card/compare/v1.0.2...v1.0.3) (2026-06-29)
+
+
+### Bug Fixes
+
+* update README ([2e2a0ea](https://github.com/figorr/fan-custom-card/commit/2e2a0eae8558ae40bd83484a464278c3cf2b4220))
+
 ## [1.0.2](https://github.com/figorr/fan-custom-card/compare/v1.0.1...v1.0.2) (2026-06-29)
 
 
