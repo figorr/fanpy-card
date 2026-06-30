@@ -171,7 +171,7 @@ const STYLE = `
   }
   .speed-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(var(--fc-speed-cols, 6), 1fr);
     gap: 4px;
     margin-bottom: 4px;
   }
@@ -293,10 +293,13 @@ class FanCustomCard extends HTMLElement {
     const p = config.prefix;
     const pow = this._state(`input_boolean.${p}_power`);
     const luz = this._state(`input_boolean.${p}_luz`);
+    const velEntity = this._hass?.states?.[`input_select.${p}_velocidad`];
+    const velOptions = velEntity?.attributes?.options;
     const vel = this._state(`input_select.${p}_velocidad`) || "0";
+    const numVel = Array.isArray(velOptions) ? velOptions.length : 6;
     const isOn = pow === "on";
     const luzOn = luz === "on";
-    const spd = Math.max(0.6, 2.5 - parseInt(vel || "0", 10) * 0.3);
+    const spd = Math.max(0.6, 2.5 - parseInt(vel || "0", 10) * (0.3 * 6 / numVel));
     const activeClass = (cur, expected) => (cur === String(expected) ? "active" : "");
 
     return `
@@ -345,13 +348,13 @@ class FanCustomCard extends HTMLElement {
         </div>
 
         <div class="row-label">${t(this._hass, "velocidad")}</div>
-        <div class="speed-grid">
-          ${[1,2,3,4,5,6].map((i) => `
+        <div class="speed-grid" style="--fc-speed-cols: ${numVel}">
+          ${Array.from({ length: numVel }, (_, i) => i + 1).map((i) => `
             <button class="speed-btn ${activeClass(vel, i)}" data-cmd="vel" data-val="${i}">${i}</button>
           `).join("")}
         </div>
         <div class="speed-footer">
-          <span>${t(this._hass, "velocidad")}: ${vel}/6</span>
+          <span>${t(this._hass, "velocidad")}: ${vel}/${numVel}</span>
         </div>
       </div>`;
   }
