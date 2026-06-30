@@ -513,6 +513,22 @@ class FanCustomCard extends HTMLElement {
           this._hass.callService("light", on ? "turn_off" : "turn_on", { entity_id: config.entity_light });
           break;
         }
+        case "luz_fria": {
+          this._hass.callService("light", "turn_on", { entity_id: config.entity_light, color_temp: 153 });
+          break;
+        }
+        case "luz_calida": {
+          this._hass.callService("light", "turn_on", { entity_id: config.entity_light, color_temp: 500 });
+          break;
+        }
+        case "intensidad_baja": {
+          this._hass.callService("light", "turn_on", { entity_id: config.entity_light, brightness_step_pct: -25 });
+          break;
+        }
+        case "intensidad_alta": {
+          this._hass.callService("light", "turn_on", { entity_id: config.entity_light, brightness_step_pct: 25 });
+          break;
+        }
       }
     });
   }
