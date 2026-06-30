@@ -428,6 +428,14 @@ class FanCustomCard extends HTMLElement {
     });
   }
 
+  _slugify(text) {
+    if (!text) return "";
+    return text.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, "");
+  }
+
   _directHTML() {
     const config = this._config;
     const fanState = this._state(config.entity_fan);
@@ -437,12 +445,20 @@ class FanCustomCard extends HTMLElement {
     const hasLight = config.has_light !== false && config.entity_light;
     const hasTemp = hasLight && config.has_light_temperature !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
+    const speedPrefix = config.prefix || (config.name ? `ventilador_${this._slugify(config.name)}` : null);
+    const velEntity = speedPrefix ? this._hass?.states?.[`input_select.${speedPrefix}_velocidad`] : null;
+    const velOptions = velEntity?.attributes?.options;
+    const hasSpeed = !!velEntity;
+    const vel = hasSpeed ? (this._state(`input_select.${speedPrefix}_velocidad`) || "0") : "0";
+    const numVel = Array.isArray(velOptions) ? velOptions.length : 6;
+    const activeClass = (cur, expected) => (cur === String(expected) ? "active" : "");
+    const spd = Math.max(0.6, 2.5 - parseInt(vel || "0", 10) * (0.3 * 6 / numVel));
 
     return `
       <div class="fan-card ${fanOn ? "" : "power-off"}">
         <div class="header">
           <div class="header-left">
-            <div class="fan-icon-wrap ${fanOn ? "on spinning" : ""}" style="--fc-spin-duration: 1.5s">
+            <div class="fan-icon-wrap ${fanOn ? "on spinning" : ""}" style="--fc-spin-duration: ${spd}s">
               <ha-icon icon="mdi:fan"></ha-icon>
             </div>
             <span class="room-name">${config.name || config.entity_fan}</span>
@@ -488,6 +504,18 @@ class FanCustomCard extends HTMLElement {
             </button>
           </div>
         ` : ""}
+
+        ${hasSpeed ? `
+          <div class="row-label">${t(this._hass, "velocidad")}</div>
+          <div class="speed-grid" style="--fc-speed-cols: ${numVel}">
+            ${Array.from({ length: numVel }, (_, i) => i + 1).map((i) => `
+              <button class="speed-btn ${activeClass(vel, i)}" data-cmd="vel" data-val="${i}">${i}</button>
+            `).join("")}
+          </div>
+          <div class="speed-footer">
+            <span>${t(this._hass, "velocidad")}: ${vel}/${numVel}</span>
+          </div>
+        ` : ""}
       </div>`;
   }
 
@@ -496,6 +524,11 @@ class FanCustomCard extends HTMLElement {
     const card = root.querySelector(".fan-card");
     if (!card) return;
     const config = this._config;
+    const speedPrefix = config.prefix || (config.name ? `ventilador_${this._slugify(config.name)}` : null);
+
+    const scriptFor = (key, fallback) => {
+      return config[key] || `script.${speedPrefix}_${fallback}`;
+    };
 
     card.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-cmd]");
@@ -527,6 +560,10 @@ class FanCustomCard extends HTMLElement {
         }
         case "intensidad_alta": {
           this._hass.callService("light", "turn_on", { entity_id: config.entity_light, brightness_step_pct: 25 });
+          break;
+        }
+        case "vel": {
+          this._call(scriptFor(`velocidad_${btn.dataset.val}_script`, `velocidad_${btn.dataset.val}`));
           break;
         }
       }

@@ -57,8 +57,6 @@ class FanCustomCardEditor extends HTMLElement {
     const hasLight = isDirect ? (c.has_light !== false) : (c.has_light !== false);
     const hasTemp = isDirect ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
     const hasInt = isDirect ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
-    const hasSpeed = isDirect && c.has_speed === true;
-
     const fanEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("switch.")).sort();
     const lightEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("light.")).sort();
 
@@ -194,16 +192,6 @@ class FanCustomCardEditor extends HTMLElement {
               <span class="toggle-thumb"></span>
             </label>
             <label for="tog-int" class="${!hasLight ? "disabled" : ""}">${L("has_light_intensity")}</label>
-          </div>
-
-          <div class="toggle-row" id="speed-toggle-row" style="display:${isDirect ? "" : "none"}">
-            <label class="toggle-switch">
-              <input type="checkbox" id="tog-speed" ${hasSpeed ? "checked" : ""}>
-              <span class="toggle-track"></span>
-              <span class="toggle-thumb"></span>
-            </label>
-            <label for="tog-speed">${L("has_speed")}</label>
-          </div>
         </div>
       </div>
 
@@ -219,31 +207,23 @@ class FanCustomCardEditor extends HTMLElement {
     const modeSelect = root.getElementById("mode-select");
     const helpersFields = root.getElementById("helpers-fields");
     const directFields = root.getElementById("direct-fields");
-    const speedToggleRow = root.getElementById("speed-toggle-row");
 
     modeSelect.addEventListener("change", () => {
       const newMode = modeSelect.value;
-      const wasDirect = this._config.mode === "direct";
-
       if (newMode === "direct") {
         this._config.mode = "direct";
         this._config.has_light_temperature = false;
         this._config.has_light_intensity = false;
-        this._config.has_speed = false;
-        delete this._config.prefix;
         helpersFields.style.display = "none";
         directFields.style.display = "";
-        speedToggleRow.style.display = "";
       } else {
         this._config.mode = "helpers";
         delete this._config.entity_fan;
         delete this._config.entity_light;
-        delete this._config.has_speed;
         if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
         if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
         helpersFields.style.display = "";
         directFields.style.display = "none";
-        speedToggleRow.style.display = "none";
       }
       this._dispatch();
       this._render();
@@ -296,7 +276,6 @@ class FanCustomCardEditor extends HTMLElement {
     const cbLight = root.getElementById("tog-light");
     const cbTemp = root.getElementById("tog-temp");
     const cbInt = root.getElementById("tog-int");
-    const cbSpeed = root.getElementById("tog-speed");
 
     const toggleLabel = (cb) => {
       if (!cb) return;
@@ -323,7 +302,6 @@ class FanCustomCardEditor extends HTMLElement {
       if (cbLight) this._config.has_light = cbLight.checked;
       if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
-      if (cbSpeed) this._config.has_speed = cbSpeed.checked;
       this._dispatch();
       const previewName = root.getElementById("preview-name");
       if (previewName) previewName.textContent = this._config.name || "—";
@@ -337,7 +315,6 @@ class FanCustomCardEditor extends HTMLElement {
     }
     if (cbTemp) cbTemp.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
-    if (cbSpeed) cbSpeed.addEventListener("change", saveToggles);
   }
 }
 
