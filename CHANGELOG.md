@@ -1,3 +1,11 @@
+## [1.0.6](https://github.com/figorr/fan-custom-card/compare/v1.0.5...v1.0.6) (2026-06-30)
+
+
+### Bug Fixes
+
+* more-info for direct mode ([ef991fc](https://github.com/figorr/fan-custom-card/commit/ef991fc73da1259591910504ec816ced767863cf))
+* update README ([754e721](https://github.com/figorr/fan-custom-card/commit/754e721b3b492f8f739c0949fd2bfa1938e78cd8))
+
 ## [1.0.5](https://github.com/figorr/fan-custom-card/compare/v1.0.4...v1.0.5) (2026-06-30)
 
 
