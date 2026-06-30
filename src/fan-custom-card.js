@@ -302,6 +302,10 @@ class FanCustomCard extends HTMLElement {
     const spd = Math.max(0.6, 2.5 - parseInt(vel || "0", 10) * (0.3 * 6 / numVel));
     const activeClass = (cur, expected) => (cur === String(expected) ? "active" : "");
 
+    const hasLight = config.has_light !== false;
+    const hasTemp = hasLight && config.has_light_temperature !== false;
+    const hasInt = hasLight && config.has_light_intensity !== false;
+
     return `
       <div class="fan-card ${isOn ? "" : "power-off"}">
         <div class="header">
@@ -317,35 +321,41 @@ class FanCustomCard extends HTMLElement {
           </button>
         </div>
 
+        ${hasLight ? `
           <div class="row-label">${t(this._hass, "luz")}</div>
-        <div class="btn-row">
-          <button class="ctrl ${luzOn ? "luz-active" : ""}" data-cmd="luz">
-            <ha-icon icon="mdi:lightbulb${luzOn ? "-outline" : ""}"></ha-icon>
-            <span class="lbl">${t(this._hass, "luz")}</span>
-          </button>
-        </div>
+          <div class="btn-row">
+            <button class="ctrl ${luzOn ? "luz-active" : ""}" data-cmd="luz">
+              <ha-icon icon="mdi:lightbulb${luzOn ? "-outline" : ""}"></ha-icon>
+              <span class="lbl">${t(this._hass, "luz")}</span>
+            </button>
+          </div>
+        ` : ""}
 
-        <div class="row-label">${t(this._hass, "temperatura")}</div>
-        <div class="btn-row">
-          <button class="ctrl" data-cmd="luz_fria">
-            <ha-icon icon="mdi:snowflake"></ha-icon>
-            <span class="lbl">${t(this._hass, "fria")}</span>
-          </button>
-          <button class="ctrl" data-cmd="luz_calida">
-            <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
-            <span class="lbl">${t(this._hass, "calida")}</span>
-          </button>
-        </div>
+        ${hasTemp ? `
+          <div class="row-label">${t(this._hass, "temperatura")}</div>
+          <div class="btn-row">
+            <button class="ctrl" data-cmd="luz_fria">
+              <ha-icon icon="mdi:snowflake"></ha-icon>
+              <span class="lbl">${t(this._hass, "fria")}</span>
+            </button>
+            <button class="ctrl" data-cmd="luz_calida">
+              <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
+              <span class="lbl">${t(this._hass, "calida")}</span>
+            </button>
+          </div>
+        ` : ""}
 
-        <div class="row-label">${t(this._hass, "intensidad")}</div>
-        <div class="btn-row">
-          <button class="ctrl" data-cmd="intensidad_baja">
-            <ha-icon icon="mdi:minus"></ha-icon>
-          </button>
-          <button class="ctrl" data-cmd="intensidad_alta">
-            <ha-icon icon="mdi:plus"></ha-icon>
-          </button>
-        </div>
+        ${hasInt ? `
+          <div class="row-label">${t(this._hass, "intensidad")}</div>
+          <div class="btn-row">
+            <button class="ctrl" data-cmd="intensidad_baja">
+              <ha-icon icon="mdi:minus"></ha-icon>
+            </button>
+            <button class="ctrl" data-cmd="intensidad_alta">
+              <ha-icon icon="mdi:plus"></ha-icon>
+            </button>
+          </div>
+        ` : ""}
 
         <div class="row-label">${t(this._hass, "velocidad")}</div>
         <div class="speed-grid" style="--fc-speed-cols: ${numVel}">

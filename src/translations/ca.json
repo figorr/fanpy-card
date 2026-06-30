@@ -33,5 +33,8 @@
   "area": "Àrea",
   "select_area": "Selecciona una àrea",
   "loading": "Carregant...",
-  "edit_code_hint": "Per sobreescriure scripts, edita la targeta en mode YAML (canvia a l'editor de codi)."
+  "edit_code_hint": "Per sobreescriure scripts, edita la targeta en mode YAML (canvia a l'editor de codi).",
+  "has_light": "Té llum",
+  "has_light_temperature": "Temperatura de color",
+  "has_light_intensity": "Intensitat de llum"
 }
