@@ -1,3 +1,11 @@
+## [1.0.4](https://github.com/figorr/fan-custom-card/compare/v1.0.3...v1.0.4) (2026-06-30)
+
+
+### Bug Fixes
+
+* add light setup options ([c9357f4](https://github.com/figorr/fan-custom-card/commit/c9357f4d0c1a7b5dbfc65a00b424f865c5667191))
+* variable speed buttons ([a90a25c](https://github.com/figorr/fan-custom-card/commit/a90a25cba1bc8d28284b009d6fba3018acb20d2c))
+
 ## [1.0.3](https://github.com/figorr/fan-custom-card/compare/v1.0.2...v1.0.3) (2026-06-29)
 
 
