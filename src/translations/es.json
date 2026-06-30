@@ -36,5 +36,13 @@
   "edit_code_hint": "Para sobrescribir scripts, edita la tarjeta en modo YAML (cambia al editor de código).",
   "has_light": "Tiene luz",
   "has_light_temperature": "Temperatura de color",
-  "has_light_intensity": "Intensidad de luz"
+  "has_light_intensity": "Intensidad de luz",
+  "mode": "Modo",
+  "mode_helpers": "Helpers (scripts + input_*)",
+  "mode_direct": "Directo (switch.* / light.*)",
+  "entity_fan": "Entidad ventilador",
+  "entity_light": "Entidad luz",
+  "has_speed": "Control de velocidad",
+  "entity_hint": "Escribe una ID de entidad o selecciona de las sugerencias",
+  "ventilator": "Ventilador"
 }

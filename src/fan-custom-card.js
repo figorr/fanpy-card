@@ -241,7 +241,7 @@ class FanCustomCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config || !config.prefix) {
+    if (!config) {
       this._config = {};
       this._render();
       return;
@@ -275,7 +275,7 @@ class FanCustomCard extends HTMLElement {
     const config = this._config;
     const hass = this._hass;
 
-    if (!config || !config.prefix) {
+    if (!config) {
       root.innerHTML = `<style>${STYLE}</style><div class="empty-state">${t(hass, "no_config")}</div>`;
       return;
     }
@@ -284,6 +284,20 @@ class FanCustomCard extends HTMLElement {
       return;
     }
 
+    if (config.mode === "direct") {
+      if (!config.entity_fan) {
+        root.innerHTML = `<style>${STYLE}</style><div class="empty-state">${t(hass, "no_config")}</div>`;
+        return;
+      }
+      root.innerHTML = `<style>${STYLE}</style>${this._directHTML()}`;
+      this._bindDirect();
+      return;
+    }
+
+    if (!config.prefix) {
+      root.innerHTML = `<style>${STYLE}</style><div class="empty-state">${t(hass, "no_config")}</div>`;
+      return;
+    }
     root.innerHTML = `<style>${STYLE}</style>${this._fanHTML()}`;
     this._bind();
   }
@@ -410,6 +424,95 @@ class FanCustomCard extends HTMLElement {
         case "vel":
           this._call(scriptFor(`velocidad_${btn.dataset.val}_script`, `velocidad_${btn.dataset.val}`));
           break;
+      }
+    });
+  }
+
+  _directHTML() {
+    const config = this._config;
+    const fanState = this._state(config.entity_fan);
+    const lightState = this._state(config.entity_light);
+    const fanOn = fanState === "on";
+    const lightOn = lightState === "on";
+    const hasLight = config.has_light !== false && config.entity_light;
+    const hasTemp = hasLight && config.has_light_temperature !== false;
+    const hasInt = hasLight && config.has_light_intensity !== false;
+
+    return `
+      <div class="fan-card ${fanOn ? "" : "power-off"}">
+        <div class="header">
+          <div class="header-left">
+            <div class="fan-icon-wrap ${fanOn ? "on spinning" : ""}" style="--fc-spin-duration: 1.5s">
+              <ha-icon icon="mdi:fan"></ha-icon>
+            </div>
+            <span class="room-name">${config.name || config.entity_fan}</span>
+          </div>
+          <button class="power-btn ${fanOn ? "on" : "off"}" data-cmd="power">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span>${fanOn ? t(this._hass, "on") : t(this._hass, "off")}</span>
+          </button>
+        </div>
+
+        ${hasLight ? `
+          <div class="row-label">${t(this._hass, "luz")}</div>
+          <div class="btn-row">
+            <button class="ctrl ${lightOn ? "luz-active" : ""}" data-cmd="luz">
+              <ha-icon icon="mdi:lightbulb${lightOn ? "-outline" : ""}"></ha-icon>
+              <span class="lbl">${t(this._hass, "luz")}</span>
+            </button>
+          </div>
+        ` : ""}
+
+        ${hasTemp ? `
+          <div class="row-label">${t(this._hass, "temperatura")}</div>
+          <div class="btn-row">
+            <button class="ctrl" data-cmd="luz_fria">
+              <ha-icon icon="mdi:snowflake"></ha-icon>
+              <span class="lbl">${t(this._hass, "fria")}</span>
+            </button>
+            <button class="ctrl" data-cmd="luz_calida">
+              <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
+              <span class="lbl">${t(this._hass, "calida")}</span>
+            </button>
+          </div>
+        ` : ""}
+
+        ${hasInt ? `
+          <div class="row-label">${t(this._hass, "intensidad")}</div>
+          <div class="btn-row">
+            <button class="ctrl" data-cmd="intensidad_baja">
+              <ha-icon icon="mdi:minus"></ha-icon>
+            </button>
+            <button class="ctrl" data-cmd="intensidad_alta">
+              <ha-icon icon="mdi:plus"></ha-icon>
+            </button>
+          </div>
+        ` : ""}
+      </div>`;
+  }
+
+  _bindDirect() {
+    const root = this.shadowRoot;
+    const card = root.querySelector(".fan-card");
+    if (!card) return;
+    const config = this._config;
+
+    card.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-cmd]");
+      if (!btn) return;
+      const cmd = btn.dataset.cmd;
+
+      switch (cmd) {
+        case "power": {
+          const on = this._state(config.entity_fan) === "on";
+          this._hass.callService("switch", on ? "turn_off" : "turn_on", { entity_id: config.entity_fan });
+          break;
+        }
+        case "luz": {
+          const on = this._state(config.entity_light) === "on";
+          this._hass.callService("light", on ? "turn_off" : "turn_on", { entity_id: config.entity_light });
+          break;
+        }
       }
     });
   }

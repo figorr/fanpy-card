@@ -44,6 +44,9 @@ class FanCustomCardEditor extends HTMLElement {
       return;
     }
 
+    const mode = c.mode || "helpers";
+    const isDirect = mode === "direct";
+
     const areas = hass.areas ? Object.entries(hass.areas) : [];
     const prefix = c.prefix || "";
     const currentArea = areas.find(([, a]) =>
@@ -51,9 +54,13 @@ class FanCustomCardEditor extends HTMLElement {
     );
     const currentId = currentArea ? currentArea[0] : "";
 
-    const hasLight = c.has_light !== false;
-    const hasTemp = c.has_light_temperature !== false;
-    const hasInt = c.has_light_intensity !== false;
+    const hasLight = isDirect ? (c.has_light !== false) : (c.has_light !== false);
+    const hasTemp = isDirect ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
+    const hasInt = isDirect ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
+    const hasSpeed = isDirect && c.has_speed === true;
+
+    const fanEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("switch.")).sort();
+    const lightEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("light.")).sort();
 
     root.innerHTML = `<style>
       .editor { padding: 8px 0; }
@@ -90,22 +97,78 @@ class FanCustomCardEditor extends HTMLElement {
         background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.15s; pointer-events: none;
       }
       .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(16px); }
+      .section-title {
+        font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+        color: var(--secondary-text-color, #727272); margin: 8px 0 4px;
+      }
       .summary { margin-top: 4px; padding: 10px 12px; background: var(--secondary-background-color, #f5f5f5);
         border-radius: 6px; font-size: 13px; line-height: 1.5; }
       .summary strong { font-weight: 600; }
       .summary .hint { font-size: 11px; color: var(--secondary-text-color, #727272); margin-top: 4px; font-style: italic; }
     </style>
     <div class="editor">
+
       <div class="field-row">
         <div>
-          <span class="field-label">${L("area")}</span>
-          <select id="area-select">
-            <option value="">— ${L("select_area")} —</option>
-            ${areas.map(([id, a]) =>
-              `<option value="${id}" ${id === currentId ? "selected" : ""}>${a.name}</option>`
-            ).join("")}
+          <span class="field-label">${L("mode")}</span>
+          <select id="mode-select">
+            <option value="helpers" ${!isDirect ? "selected" : ""}>${L("mode_helpers")}</option>
+            <option value="direct" ${isDirect ? "selected" : ""}>${L("mode_direct")}</option>
           </select>
+        </div>
+      </div>
 
+      <div id="helpers-fields" style="display:${isDirect ? "none" : ""}">
+        <div class="field-row">
+          <div>
+            <span class="field-label">${L("area")}</span>
+            <select id="area-select">
+              <option value="">— ${L("select_area")} —</option>
+              ${areas.map(([id, a]) =>
+                `<option value="${id}" ${id === currentId ? "selected" : ""}>${a.name}</option>`
+              ).join("")}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="direct-fields" style="display:${isDirect ? "" : "none"}">
+        <div class="field-row">
+          <div>
+            <span class="field-label">${L("name")}</span>
+            <select id="direct-name">
+              <option value="">— ${L("name")} —</option>
+              ${areas.map(([id, a]) =>
+                `<option value="${a.name.toUpperCase()}" ${a.name.toUpperCase() === (c.name || "") ? "selected" : ""}>${a.name}</option>`
+              ).join("")}
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <span class="field-label">${L("entity_fan")}</span>
+            <select id="entity-fan">
+              <option value="">— ${L("entity_fan")} —</option>
+              ${fanEntities.map(e =>
+                `<option value="${e}" ${e === (c.entity_fan || "") ? "selected" : ""}>${e}</option>`
+              ).join("")}
+            </select>
+          </div>
+          <div>
+            <span class="field-label">${L("entity_light")}</span>
+            <select id="entity-light">
+              <option value="">— ${L("entity_light")} —</option>
+              ${lightEntities.map(e =>
+                `<option value="${e}" ${e === (c.entity_light || "") ? "selected" : ""}>${e}</option>`
+              ).join("")}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">${L("basic")}</div>
+      <div class="field-row">
+        <div>
           <div class="toggle-row">
             <label class="toggle-switch">
               <input type="checkbox" id="tog-light" ${hasLight ? "checked" : ""}>
@@ -132,59 +195,149 @@ class FanCustomCardEditor extends HTMLElement {
             </label>
             <label for="tog-int" class="${!hasLight ? "disabled" : ""}">${L("has_light_intensity")}</label>
           </div>
+
+          <div class="toggle-row" id="speed-toggle-row" style="display:${isDirect ? "" : "none"}">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-speed" ${hasSpeed ? "checked" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-speed">${L("has_speed")}</label>
+          </div>
         </div>
       </div>
+
       <div class="summary">
         <div><strong>${L("name")}:</strong> <span id="preview-name">${c.name || "—"}</span></div>
-        <div><strong>${L("prefix")}:</strong> <span id="preview-prefix">${prefix || "—"}</span></div>
+        ${!isDirect ? `<div><strong>${L("prefix")}:</strong> <span id="preview-prefix">${prefix || "—"}</span></div>` : ""}
+        ${isDirect ? `<div><strong>${L("entity_fan")}:</strong> <span>${c.entity_fan || "—"}</span></div>
+        <div><strong>${L("entity_light")}:</strong> <span>${c.entity_light || "—"}</span></div>` : ""}
         <div class="hint">${L("edit_code_hint")}</div>
       </div>
     </div>`;
 
-    const select = root.getElementById("area-select");
-    select.addEventListener("change", () => {
-      const areaId = select.value;
-      if (!areaId) return;
-      const area = hass.areas[areaId];
-      if (!area) return;
-      const slug = this._slugify(area.name);
-      this._config.name = area.name.toUpperCase();
-      this._config.prefix = `ventilador_${slug}`;
+    const modeSelect = root.getElementById("mode-select");
+    const helpersFields = root.getElementById("helpers-fields");
+    const directFields = root.getElementById("direct-fields");
+    const speedToggleRow = root.getElementById("speed-toggle-row");
+
+    modeSelect.addEventListener("change", () => {
+      const newMode = modeSelect.value;
+      const wasDirect = this._config.mode === "direct";
+
+      if (newMode === "direct") {
+        this._config.mode = "direct";
+        this._config.has_light_temperature = false;
+        this._config.has_light_intensity = false;
+        this._config.has_speed = false;
+        delete this._config.prefix;
+        helpersFields.style.display = "none";
+        directFields.style.display = "";
+        speedToggleRow.style.display = "";
+      } else {
+        this._config.mode = "helpers";
+        delete this._config.entity_fan;
+        delete this._config.entity_light;
+        delete this._config.has_speed;
+        if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
+        if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
+        helpersFields.style.display = "";
+        directFields.style.display = "none";
+        speedToggleRow.style.display = "none";
+      }
       this._dispatch();
-      root.getElementById("preview-name").textContent = area.name.toUpperCase();
-      root.getElementById("preview-prefix").textContent = `ventilador_${slug}`;
+      this._render();
     });
+
+    const areaSelect = root.getElementById("area-select");
+    const directName = root.getElementById("direct-name");
+    const entityFan = root.getElementById("entity-fan");
+    const entityLight = root.getElementById("entity-light");
+
+    if (areaSelect) {
+      areaSelect.addEventListener("change", () => {
+        const areaId = areaSelect.value;
+        if (!areaId) return;
+        const area = hass.areas[areaId];
+        if (!area) return;
+        const slug = this._slugify(area.name);
+        this._config.name = area.name.toUpperCase();
+        this._config.prefix = `ventilador_${slug}`;
+        this._dispatch();
+        const previewName = root.getElementById("preview-name");
+        if (previewName) previewName.textContent = area.name.toUpperCase();
+        const previewPrefix = root.getElementById("preview-prefix");
+        if (previewPrefix) previewPrefix.textContent = `ventilador_${slug}`;
+      });
+    }
+
+    if (directName) {
+      directName.addEventListener("change", () => {
+        this._config.name = directName.value || undefined;
+        this._dispatch();
+        const previewName = root.getElementById("preview-name");
+        if (previewName) previewName.textContent = directName.value || "—";
+      });
+    }
+
+    if (entityFan) {
+      entityFan.addEventListener("change", () => {
+        this._config.entity_fan = entityFan.value || undefined;
+        this._dispatch();
+      });
+    }
+    if (entityLight) {
+      entityLight.addEventListener("change", () => {
+        this._config.entity_light = entityLight.value || undefined;
+        this._dispatch();
+      });
+    }
 
     const cbLight = root.getElementById("tog-light");
     const cbTemp = root.getElementById("tog-temp");
     const cbInt = root.getElementById("tog-int");
-    const toggleLabel = (cb, labelEl) => {
-      const label = labelEl || root.querySelector(`label[for="${cb.id}"]`);
+    const cbSpeed = root.getElementById("tog-speed");
+
+    const toggleLabel = (cb) => {
+      if (!cb) return;
+      const label = root.querySelector(`label[for="${cb.id}"]`);
       if (!label) return;
       label.classList.toggle("disabled", cb.disabled);
     };
+
     const syncSubToggles = () => {
-      const enabled = cbLight.checked;
-      cbTemp.disabled = !enabled;
-      cbInt.disabled = !enabled;
-      if (!enabled) { cbTemp.checked = false; cbInt.checked = false; }
-      toggleLabel(cbTemp);
-      toggleLabel(cbInt);
+      const enabled = cbLight && cbLight.checked;
+      if (cbTemp) {
+        cbTemp.disabled = !enabled;
+        if (!enabled) cbTemp.checked = false;
+        toggleLabel(cbTemp);
+      }
+      if (cbInt) {
+        cbInt.disabled = !enabled;
+        if (!enabled) cbInt.checked = false;
+        toggleLabel(cbInt);
+      }
     };
 
     const saveToggles = () => {
-      this._config.has_light = cbLight.checked;
-      this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
-      this._config.has_light_intensity = cbLight.checked && cbInt.checked;
+      if (cbLight) this._config.has_light = cbLight.checked;
+      if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
+      if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
+      if (cbSpeed) this._config.has_speed = cbSpeed.checked;
       this._dispatch();
+      const previewName = root.getElementById("preview-name");
+      if (previewName) previewName.textContent = this._config.name || "—";
     };
 
-    cbLight.addEventListener("change", () => {
-      syncSubToggles();
-      saveToggles();
-    });
-    cbTemp.addEventListener("change", saveToggles);
-    cbInt.addEventListener("change", saveToggles);
+    if (cbLight) {
+      cbLight.addEventListener("change", () => {
+        syncSubToggles();
+        saveToggles();
+      });
+    }
+    if (cbTemp) cbTemp.addEventListener("change", saveToggles);
+    if (cbInt) cbInt.addEventListener("change", saveToggles);
+    if (cbSpeed) cbSpeed.addEventListener("change", saveToggles);
   }
 }
 

@@ -36,5 +36,13 @@
   "edit_code_hint": "To override scripts, edit the card in YAML mode (switch to code editor).",
   "has_light": "Has light",
   "has_light_temperature": "Light temperature",
-  "has_light_intensity": "Light intensity"
+  "has_light_intensity": "Light intensity",
+  "mode": "Mode",
+  "mode_helpers": "Helpers (scripts + input_*)",
+  "mode_direct": "Direct (switch.* / light.*)",
+  "entity_fan": "Fan entity",
+  "entity_light": "Light entity",
+  "has_speed": "Speed control",
+  "entity_hint": "Type an entity ID or select from suggestions",
+  "ventilator": "Ventilator"
 }
