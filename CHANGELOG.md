@@ -1,3 +1,14 @@
+## [1.0.5](https://github.com/figorr/fan-custom-card/compare/v1.0.4...v1.0.5) (2026-06-30)
+
+
+### Bug Fixes
+
+* add direct mode ([5fcb9a2](https://github.com/figorr/fan-custom-card/commit/5fcb9a265251c8e6f630118d70127fd94dbce121))
+* include mode images ([e95e8f5](https://github.com/figorr/fan-custom-card/commit/e95e8f53876139d89990a15352053adf79a41907))
+* remove speed toggle with auto detect speed modes ([a7622e2](https://github.com/figorr/fan-custom-card/commit/a7622e21b3ce7014c6331ba5def29399c70c3196))
+* temperature and intensity light controls under direct mode ([063b62b](https://github.com/figorr/fan-custom-card/commit/063b62bf4f7651d57c76f94aece8c97bc55b457c))
+* update README ([da06258](https://github.com/figorr/fan-custom-card/commit/da0625891be6b4369d7edeb7a3db26392a6c5d93))
+
 ## [1.0.4](https://github.com/figorr/fan-custom-card/compare/v1.0.3...v1.0.4) (2026-06-30)
 
 

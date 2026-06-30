@@ -1,6 +1,6 @@
 {
   "name": "fan-custom-card",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "description": "Custom Lovelace card to control ceiling fans with light and speed",
   "main": "dist/fan-custom-card.js",
