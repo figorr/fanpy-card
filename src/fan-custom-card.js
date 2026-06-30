@@ -393,6 +393,7 @@ class FanCustomCard extends HTMLElement {
     };
 
     card.addEventListener("click", (e) => {
+
       const btn = e.target.closest("[data-cmd]");
       if (!btn) return;
       const cmd = btn.dataset.cmd;
@@ -457,7 +458,7 @@ class FanCustomCard extends HTMLElement {
     return `
       <div class="fan-card ${fanOn ? "" : "power-off"}">
         <div class="header">
-          <div class="header-left">
+          <div class="header-left" data-more-info="power">
             <div class="fan-icon-wrap ${fanOn ? "on spinning" : ""}" style="--fc-spin-duration: ${spd}s">
               <ha-icon icon="mdi:fan"></ha-icon>
             </div>
@@ -470,7 +471,7 @@ class FanCustomCard extends HTMLElement {
         </div>
 
         ${hasLight ? `
-          <div class="row-label">${t(this._hass, "luz")}</div>
+          <div class="row-label" data-more-info="luz">${t(this._hass, "luz")}</div>
           <div class="btn-row">
             <button class="ctrl ${lightOn ? "luz-active" : ""}" data-cmd="luz">
               <ha-icon icon="mdi:lightbulb${lightOn ? "-outline" : ""}"></ha-icon>
@@ -531,6 +532,18 @@ class FanCustomCard extends HTMLElement {
     };
 
     card.addEventListener("click", (e) => {
+      const infoEl = e.target.closest("[data-more-info]");
+      if (infoEl) {
+        const entityId = infoEl.dataset.moreInfo === "power"
+          ? config.entity_fan
+          : config.entity_light;
+        this.dispatchEvent(new CustomEvent("hass-more-info", {
+          detail: { entityId },
+          bubbles: true, composed: true,
+        }));
+        return;
+      }
+
       const btn = e.target.closest("[data-cmd]");
       if (!btn) return;
       const cmd = btn.dataset.cmd;
