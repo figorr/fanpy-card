@@ -5,6 +5,18 @@
 
 Custom Lovelace card for Home Assistant to control ceiling fans with light and speed settings.
 
+## Background
+
+This card was born from a real need. I bought some ceiling fans that weren't smart — they worked via RF remote control. I discovered I could make them smart by using a **Broadlink RM4 Pro** to learn the RF commands and integrate them into Home Assistant.
+
+After teaching the commands to HA (following the [Broadlink integration docs](https://www.home-assistant.io/integrations/broadlink/)), I created **scripts** to execute them and exposed those scripts to Alexa through the [Alexa Smart Home skill](https://www.home-assistant.io/integrations/alexa.smart_home/). Voice control worked, but I wanted a proper dashboard card.
+
+I couldn't find an existing card that fit my needs, so I built this one. The **Helpers mode** is the original design: it combines `input_boolean` entities (for state tracking), `input_select` (for speed), `input_button` entities, and scripts that call the Broadlink RF commands.
+
+Later I added a Shelly 2PM Gen 3 to control an extractor fan and its light in a bathroom. Since the Shelly exposes native `switch.*` and `light.*` entities, I added the **Direct mode** — no scripts or helpers needed, just direct service calls.
+
+This card is the result of that journey, and I hope it helps others in similar situations.
+
 ## Features
 
 - ✅ **Two modes**: Helpers (scripts + `input_*` entities) and Direct (native `switch.*` / `light.*` entities)
@@ -137,6 +149,322 @@ If no override is specified, the card auto-generates names from the prefix:
 | Dim down | `script.{prefix}_intensidad_baja` |
 | Dim up | `script.{prefix}_intensidad_alta` |
 | Speed 1-6 | `script.{prefix}_velocidad_{1-6}` |
+
+### Helpers Mode — Scripts Example (Broadlink RF)
+
+Below is a real `scripts.yaml` example for a ceiling fan with 6 speeds and light (temperature + intensity), controlled via a Broadlink RM4 Pro.
+
+**Important:** For the card to work in Helpers mode you must manually create:
+- **`input_boolean.{prefix}_power`** — tracks fan power state
+- **`input_boolean.{prefix}_luz`** — tracks light state
+- **`input_select.{prefix}_velocidad`** — tracks speed, with options `1`, `2`, `3`, etc. (one per speed level)
+- **`input_button.{prefix}_power_on`**, **`input_button.{prefix}_power_off`**, etc. — (optional, for automations)
+- All the **scripts** below (they send RF commands via Broadlink and update the helper entities)
+
+Each script sends the RF command and updates the corresponding helper entity so the card reflects the correct state.
+
+<details>
+<summary>Click to expand scripts.yaml (32 scripts)</summary>
+
+```yaml
+ventilador_salon_power_on:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: 'on'
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_boolean.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+  alias: Ventilador Salón Power ON
+  description: ''
+
+ventilador_salon_power_off:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: 'off'
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+  alias: Ventilador Salón Power OFF
+  description: ''
+
+ventilador_salon_luz_on:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    target:
+      entity_id: remote.broadlink_salon
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: luz
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_luz
+    data: {}
+  alias: Ventilador Salón Luz ON
+  description: ''
+
+ventilador_salon_luz_off:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: luz
+    target:
+      entity_id: remote.broadlink_salon
+  - action: input_boolean.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_luz
+  alias: Ventilador Salon Luz OFF
+  description: ''
+
+ventilador_salon_luz_calida:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: luz_calida
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  alias: Ventilador Salón Luz Cálida
+  description: ''
+
+ventilador_salon_luz_fria:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: luz_fria
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  alias: Ventilador Salón Luz Fría
+  description: ''
+
+ventilador_salon_intensidad_alta:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: intensidad_alta
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  alias: Ventilador Salón Intensidad Alta
+  description: ''
+
+ventilador_salon_intensidad_baja:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: intensidad_baja
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  alias: Ventilador Salón Intensidad Baja
+  description: ''
+
+ventilador_salon_velocidad_1:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad1
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '1'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 1
+  description: ''
+
+ventilador_salon_velocidad_2:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad2
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '2'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 2
+  description: ''
+
+ventilador_salon_velocidad_3:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad3
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '3'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 3
+  description: ''
+
+ventilador_salon_velocidad_4:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad4
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '4'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 4
+  description: ''
+
+ventilador_salon_velocidad_5:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad5
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '5'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 5
+  description: ''
+
+ventilador_salon_velocidad_6:
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: ventilador_salon
+      command: velocidad6
+    target:
+      device_id: YOUR_BROADLINK_DEVICE_ID
+  - action: input_select.select_option
+    metadata: {}
+    data:
+      option: '6'
+    target:
+      entity_id: input_select.ventilador_salon_velocidad
+  - action: input_boolean.turn_on
+    metadata: {}
+    target:
+      entity_id: input_boolean.ventilador_salon_power
+    data: {}
+  alias: Ventilador Salón Velocidad 6
+  description: ''
+```
+
+</details>
 
 ## Card Preview
 
