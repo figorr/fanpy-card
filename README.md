@@ -11,7 +11,7 @@ This card was born from a real need. I bought some ceiling fans that weren't sma
 
 After teaching the commands to HA (following the [Broadlink integration docs](https://www.home-assistant.io/integrations/broadlink/)), I created **scripts** to execute them and exposed those scripts to Alexa through the [Alexa Smart Home skill](https://www.home-assistant.io/integrations/alexa.smart_home/). Voice control worked, but I wanted a proper dashboard card.
 
-I couldn't find an existing card that fit my needs, so I built this one. The **Helpers mode** is the original design: it combines `input_boolean` entities (for state tracking), `input_select` (for speed), `input_button` entities, and scripts that call the Broadlink RF commands.
+I couldn't find an existing card that fit my needs, so I built this one. The **Helpers mode** is the original design: it combines `input_boolean` entities (for state tracking), `binary_sensor` entities (for state tracking), `input_select` (for speed), `input_button` entities, and scripts that call the Broadlink RF commands.
 
 Later I added a Shelly 2PM Gen 3 to control an extractor fan and its light in a bathroom. Since the Shelly exposes native `switch.*` and `light.*` entities, I added the **Direct mode** — no scripts or helpers needed, just direct service calls.
 
@@ -140,6 +140,8 @@ If no override is specified, the card auto-generates names from the prefix:
 | Power state | `input_boolean.{prefix}_power` |
 | Light state | `input_boolean.{prefix}_luz` |
 | Speed state | `input_select.{prefix}_velocidad` |
+| Power sensor | `binary_sensor.{prefix}_power` |
+| Light sensor | `binary_sensor.{prefix}_luz` |
 | Power ON | `script.{prefix}_power_on` |
 | Power OFF | `script.{prefix}_power_off` |
 | Light ON | `script.{prefix}_luz_on` |
@@ -157,14 +159,24 @@ Below is a real `scripts.yaml` example for a ceiling fan with 6 speeds and light
 **Important:** For the card to work in Helpers mode you must manually create:
 - **`input_boolean.{prefix}_power`** — tracks fan power state
 - **`input_boolean.{prefix}_luz`** — tracks light state
+- **`binary_sensor.{prefix}_power`** — tracks power sensor state
+- **`binary_sensor.{prefix}_luz`** — tracks light sensor state
 - **`input_select.{prefix}_velocidad`** — tracks speed, with options `1`, `2`, `3`, etc. (one per speed level)
-- **`input_button.{prefix}_power_on`**, **`input_button.{prefix}_power_off`**, etc. — (optional, for automations)
+- **`input_button.{prefix}_power_on`** 
+- **`input_button.{prefix}_power_off`**
+- **`input_button.{prefix}_luz_on`**
+- **`input_button.{prefix}_luz_off`**
+- **`input_button.{prefix}_luz_calida`**
+- **`input_button.{prefix}_luz_fria`**
+- **`input_button.{prefix}_intensidad_alta`**
+- **`input_button.{prefix}_intensidad_baja`**
+- **`input_button.{prefix}_velocidad_1`**, **`input_button.{prefix}_velocidad_2`** etc. (one per speed level)
 - All the **scripts** below (they send RF commands via Broadlink and update the helper entities)
 
 Each script sends the RF command and updates the corresponding helper entity so the card reflects the correct state.
 
 <details>
-<summary>Click to expand scripts.yaml (32 scripts)</summary>
+<summary>Click to expand scripts.yaml (14 scripts)</summary>
 
 ```yaml
 ventilador_salon_power_on:
@@ -466,6 +478,18 @@ ventilador_salon_velocidad_6:
 
 </details>
 
+It is important the script will call the exact device and command learned with the **`remote.learn_command`**.
+
+You can test the learned command using the **`remote.send_command`**.
+
+- **Broadlink learn command example:**
+
+  ![Broadlink Remote Learn Command](images/broadlink_remote_learn_command.png)
+
+- **Broadlink send command test example:**
+
+  ![Broadlink Remote Send Command](images/broadlink_remote_send_command.png)
+
 ## Card Preview
 
 The card renders a compact control panel. Example layout with all sections visible:
@@ -495,7 +519,7 @@ The card renders a compact control panel. Example layout with all sections visib
 - Light button shows yellow when light is on.
 - Sections can be hidden via toggle switches in the editor or `has_light`, `has_light_temperature`, `has_light_intensity` YAML options.
 
-![Fan Custom Card Example](images/fan_custom_card.png)
+  ![Fan Custom Card Example](images/fan_custom_card.png)
 
 ## Development
 
