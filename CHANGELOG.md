@@ -1,3 +1,12 @@
+## [1.0.7](https://github.com/figorr/fan-custom-card/compare/v1.0.6...v1.0.7) (2026-07-01)
+
+
+### Bug Fixes
+
+* include broadklink learn and send actions ([0a9be25](https://github.com/figorr/fan-custom-card/commit/0a9be25c17b797dff5317ed85c673ae5b37899f3))
+* more-info for helpers mode ([c6fe77f](https://github.com/figorr/fan-custom-card/commit/c6fe77f63ab6e7d9dc987fbcee78fa1fcad872b9))
+* update README ([efe1b67](https://github.com/figorr/fan-custom-card/commit/efe1b67b1a9e24bd4fb60ac6907afbf14e1aa47a))
+
 ## [1.0.6](https://github.com/figorr/fan-custom-card/compare/v1.0.5...v1.0.6) (2026-06-30)
 
 
