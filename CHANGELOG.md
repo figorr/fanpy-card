@@ -1,3 +1,32 @@
+# 1.0.0 (2026-07-03)
+
+
+### Bug Fixes
+
+* add direct mode ([5fcb9a2](https://github.com/figorr/fanpy-card/commit/5fcb9a265251c8e6f630118d70127fd94dbce121))
+* add issues write permission and update actions to v4 ([d713ecb](https://github.com/figorr/fanpy-card/commit/d713ecbc6f86288d79e828cfe12a4b484a2b4143))
+* add light setup options ([c9357f4](https://github.com/figorr/fanpy-card/commit/c9357f4d0c1a7b5dbfc65a00b424f865c5667191))
+* fix hacs.json ([4750fc3](https://github.com/figorr/fanpy-card/commit/4750fc3ea164fb08ae900e58e7d4ee1d80fd0e47))
+* include broadklink learn and send actions ([0a9be25](https://github.com/figorr/fanpy-card/commit/0a9be25c17b797dff5317ed85c673ae5b37899f3))
+* include mode images ([e95e8f5](https://github.com/figorr/fanpy-card/commit/e95e8f53876139d89990a15352053adf79a41907))
+* more-info for direct mode ([ef991fc](https://github.com/figorr/fanpy-card/commit/ef991fc73da1259591910504ec816ced767863cf))
+* more-info for helpers mode ([c6fe77f](https://github.com/figorr/fanpy-card/commit/c6fe77f63ab6e7d9dc987fbcee78fa1fcad872b9))
+* remove speed toggle with auto detect speed modes ([a7622e2](https://github.com/figorr/fanpy-card/commit/a7622e21b3ce7014c6331ba5def29399c70c3196))
+* temperature and intensity light controls under direct mode ([063b62b](https://github.com/figorr/fanpy-card/commit/063b62bf4f7651d57c76f94aece8c97bc55b457c))
+* update README ([efe1b67](https://github.com/figorr/fanpy-card/commit/efe1b67b1a9e24bd4fb60ac6907afbf14e1aa47a))
+* update README ([754e721](https://github.com/figorr/fanpy-card/commit/754e721b3b492f8f739c0949fd2bfa1938e78cd8))
+* update README ([da06258](https://github.com/figorr/fanpy-card/commit/da0625891be6b4369d7edeb7a3db26392a6c5d93))
+* update README ([2e2a0ea](https://github.com/figorr/fanpy-card/commit/2e2a0eae8558ae40bd83484a464278c3cf2b4220))
+* update README ([6eb15c2](https://github.com/figorr/fanpy-card/commit/6eb15c2430c6fb74942933e46751057799f9e567))
+* update README image path to match actual file ([150afc0](https://github.com/figorr/fanpy-card/commit/150afc0024afb71ddfdc05e418d3093542b79189))
+* variable speed buttons ([a90a25c](https://github.com/figorr/fanpy-card/commit/a90a25cba1bc8d28284b009d6fba3018acb20d2c))
+
+
+### Features
+
+* initial fanpy-card v2 ([df0e0db](https://github.com/figorr/fanpy-card/commit/df0e0db3f8199ebf05a90db03c2b1f3b9519874e))
+* single-fan card with area selector editor and horizontal button layout ([183512a](https://github.com/figorr/fanpy-card/commit/183512aa19063c14d5351c824faa3f76735c3f2d))
+
 ## [1.0.7](https://github.com/figorr/fan-custom-card/compare/v1.0.6...v1.0.7) (2026-07-01)
 
 
