@@ -38,11 +38,15 @@
   "has_light_temperature": "Light temperature",
   "has_light_intensity": "Light intensity",
   "mode": "Mode",
+  "mode_fanpy_remote": "Fanpy Remote (Broadlink RF)",
+  "mode_fanpy_direct": "Fanpy Direct (switch.* / light.*)",
   "mode_helpers": "Helpers (scripts + input_*)",
   "mode_direct": "Direct (switch.* / light.*)",
   "entity_fan": "Fan entity",
   "entity_light": "Light entity",
   "has_speed": "Speed control",
   "entity_hint": "Type an entity ID or select from suggestions",
-  "ventilator": "Ventilator"
+  "ventilator": "Ventilator",
+  "has_timer": "Timer",
+  "timer": "Timer"
 }

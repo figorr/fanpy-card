@@ -5,9 +5,9 @@ import terser from "@rollup/plugin-terser";
 
 export default [
   {
-    input: "src/fan-custom-card.js",
+    input: "src/fanpy-card.js",
     output: {
-      file: "dist/fan-custom-card.js",
+      file: "dist/fanpy-card.js",
       format: "es",
       sourcemap: false,
     },
@@ -15,9 +15,9 @@ export default [
     plugins: [resolve({ browser: true }), commonjs(), json(), terser()],
   },
   {
-    input: "src/fan-custom-card-editor.js",
+    input: "src/fanpy-card-editor.js",
     output: {
-      file: "dist/fan-custom-card-editor.js",
+      file: "dist/fanpy-card-editor.js",
       format: "es",
       sourcemap: false,
     },

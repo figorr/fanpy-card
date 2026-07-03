@@ -1,9 +1,9 @@
 {
-  "name": "fan-custom-card",
+  "name": "fanpy-card",
   "version": "1.0.7",
   "type": "module",
-  "description": "Custom Lovelace card to control ceiling fans with light and speed",
-  "main": "dist/fan-custom-card.js",
+  "description": "Fanpy card to control ceiling fans with light and speed",
+  "main": "dist/fanpy-card.js",
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && rollup -c",

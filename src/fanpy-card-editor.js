@@ -1,6 +1,6 @@
 import { t } from "./translations.js";
 
-class FanCustomCardEditor extends HTMLElement {
+class FanpyCardEditor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -33,6 +33,36 @@ class FanCustomCardEditor extends HTMLElement {
       .replace(/^_|_$/g, "");
   }
 
+  _slugifyArea(area) {
+    return area.name.toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_|_$/g, "");
+  }
+
+  _detectFanpyConfigs(hass) {
+    const areaFans = {}; // {slug: number[]}
+    Object.keys(hass.states || {}).forEach(entityId => {
+      const m = entityId.match(/^select\.fanpy_ventilador_(.+)_velocidad$/);
+      if (!m) return;
+      let raw = m[1];
+      // fan number suffix convention: ventilador_{slug}_{N}
+      const parts = raw.split('_');
+      const last = parseInt(parts[parts.length - 1], 10);
+      let slug, fanNum;
+      if (!isNaN(last) && last >= 2 && last <= 5) {
+        slug = parts.slice(0, -1).join('_');
+        fanNum = last;
+      } else {
+        slug = raw;
+        fanNum = 1;
+      }
+      if (!areaFans[slug]) areaFans[slug] = [];
+      if (!areaFans[slug].includes(fanNum)) areaFans[slug].push(fanNum);
+    });
+    return areaFans;
+  }
+
   _render() {
     const root = this.shadowRoot;
     const c = this._config;
@@ -44,19 +74,38 @@ class FanCustomCardEditor extends HTMLElement {
       return;
     }
 
-    const mode = c.mode || "helpers";
+    const mode = c.mode || "fanpy_remote";
+    const isHelpers = mode === "helpers";
     const isDirect = mode === "direct";
+    const isFanpyRemote = mode === "fanpy_remote";
+    const isFanpyDirect = mode === "fanpy_direct";
+    const isFanpy = isFanpyRemote || isFanpyDirect;
+    const isEntityMode = isDirect || isFanpyDirect;
 
     const areas = hass.areas ? Object.entries(hass.areas) : [];
     const prefix = c.prefix || "";
-    const currentArea = areas.find(([, a]) =>
-      `ventilador_${this._slugify(a.name)}` === prefix || a.name === c.name
-    );
+    const fanNum = c.fan_number || 1;
+
+    // Build prefix mapping for area matching
+    // prefix like "ventilador_salon" or "ventilador_bodega_2"
+    const prefixMatch = prefix.match(/^ventilador_(.+?)(?:_(\d+))?$/);
+    const prefixSlug = prefixMatch ? prefixMatch[1] : null;
+    const prefixFan = prefixMatch && prefixMatch[2] ? parseInt(prefixMatch[2], 10) : 1;
+
+    const currentArea = areas.find(([, a]) => {
+      const slug = this._slugifyArea(a)
+      return slug === prefixSlug || a.name === c.name;
+    });
     const currentId = currentArea ? currentArea[0] : "";
 
-    const hasLight = isDirect ? (c.has_light !== false) : (c.has_light !== false);
-    const hasTemp = isDirect ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
-    const hasInt = isDirect ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
+    // Detect fanpy configurations for area filtering
+    const fanpyConfigs = this._detectFanpyConfigs(hass);
+    const fanpyAreas = areas.filter(([, a]) => fanpyConfigs[this._slugifyArea(a)]);
+    const currentFanpyFans = (currentId && fanpyConfigs[this._slugifyArea(hass.areas[currentId])]) || [1];
+
+    const hasLight = c.has_light !== false;
+    const hasTemp = isEntityMode ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
+    const hasInt = isEntityMode ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
     const fanEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("switch.")).sort();
     const lightEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("light.")).sort();
 
@@ -110,13 +159,37 @@ class FanCustomCardEditor extends HTMLElement {
         <div>
           <span class="field-label">${L("mode")}</span>
           <select id="mode-select">
-            <option value="helpers" ${!isDirect ? "selected" : ""}>${L("mode_helpers")}</option>
+            <option value="fanpy_remote" ${isFanpyRemote ? "selected" : ""}>${L("mode_fanpy_remote")}</option>
+            <option value="fanpy_direct" ${isFanpyDirect ? "selected" : ""}>${L("mode_fanpy_direct")}</option>
+            <option value="helpers" ${isHelpers ? "selected" : ""}>${L("mode_helpers")}</option>
             <option value="direct" ${isDirect ? "selected" : ""}>${L("mode_direct")}</option>
           </select>
         </div>
       </div>
 
-      <div id="helpers-fields" style="display:${isDirect ? "none" : ""}">
+      <div id="fanpy-fields" style="display:${isFanpy ? "" : "none"}">
+        <div class="field-row">
+          <div>
+            <span class="field-label">${L("area")}</span>
+            <select id="fanpy-area-select">
+              <option value="">— ${L("select_area")} —</option>
+              ${fanpyAreas.map(([id, a]) =>
+                `<option value="${id}" ${id === currentId ? "selected" : ""}>${a.name}</option>`
+              ).join("")}
+            </select>
+          </div>
+          <div>
+            <span class="field-label">${L("fan_number")}</span>
+            <select id="fanpy-fan-number">
+              ${currentFanpyFans.map(n =>
+                `<option value="${n}" ${n === prefixFan ? "selected" : ""}>${n}</option>`
+              ).join("")}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="helpers-fields" style="display:${isHelpers ? "" : "none"}">
         <div class="field-row">
           <div>
             <span class="field-label">${L("area")}</span>
@@ -130,7 +203,8 @@ class FanCustomCardEditor extends HTMLElement {
         </div>
       </div>
 
-      <div id="direct-fields" style="display:${isDirect ? "" : "none"}">
+      <div id="direct-fields" style="display:${isEntityMode ? "" : "none"}">
+        ${isDirect ? `
         <div class="field-row">
           <div>
             <span class="field-label">${L("name")}</span>
@@ -142,6 +216,7 @@ class FanCustomCardEditor extends HTMLElement {
             </select>
           </div>
         </div>
+        ` : ""}
         <div class="field-row">
           <div>
             <span class="field-label">${L("entity_fan")}</span>
@@ -193,41 +268,104 @@ class FanCustomCardEditor extends HTMLElement {
             </label>
             <label for="tog-int" class="${!hasLight ? "disabled" : ""}">${L("has_light_intensity")}</label>
         </div>
+
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-timer" ${c.has_timer !== false ? "checked" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-timer">${L("has_timer")}</label>
+          </div>
+          <div id="timer-fields" style="display:${c.has_timer !== false ? "" : "none"};margin-left:24px;margin-top:4px;">
+            <div style="display:flex;gap:6px;">
+              <div style="flex:1;min-width:0;">
+                <input type="text" id="timer1-label" value="${c.timer1_label || "1h"}"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
+              </div>
+              <div style="flex:1;min-width:0;">
+                <input type="text" id="timer2-label" value="${c.timer2_label || "2h"}"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
+              </div>
+              <div style="flex:1;min-width:0;">
+                <input type="text" id="timer3-label" value="${c.timer3_label || "4h"}"
+                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
+              </div>
+            </div>
+          </div>
       </div>
 
       <div class="summary">
         <div><strong>${L("name")}:</strong> <span id="preview-name">${c.name || "—"}</span></div>
         ${!isDirect ? `<div><strong>${L("prefix")}:</strong> <span id="preview-prefix">${prefix || "—"}</span></div>` : ""}
-        ${isDirect ? `<div><strong>${L("entity_fan")}:</strong> <span>${c.entity_fan || "—"}</span></div>
+        ${isEntityMode ? `<div><strong>${L("entity_fan")}:</strong> <span>${c.entity_fan || "—"}</span></div>
         <div><strong>${L("entity_light")}:</strong> <span>${c.entity_light || "—"}</span></div>` : ""}
         <div class="hint">${L("edit_code_hint")}</div>
       </div>
     </div>`;
 
     const modeSelect = root.getElementById("mode-select");
+    const fanpyFields = root.getElementById("fanpy-fields");
     const helpersFields = root.getElementById("helpers-fields");
     const directFields = root.getElementById("direct-fields");
 
     modeSelect.addEventListener("change", () => {
       const newMode = modeSelect.value;
-      if (newMode === "direct") {
-        this._config.mode = "direct";
+      this._config.mode = newMode;
+      if (newMode === "direct" || newMode === "fanpy_direct") {
         this._config.has_light_temperature = false;
         this._config.has_light_intensity = false;
+        fanpyFields.style.display = newMode === "fanpy_direct" ? "" : "none";
         helpersFields.style.display = "none";
         directFields.style.display = "";
-      } else {
-        this._config.mode = "helpers";
+      } else if (newMode === "fanpy_remote") {
         delete this._config.entity_fan;
         delete this._config.entity_light;
         if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
         if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
+        fanpyFields.style.display = "";
+        helpersFields.style.display = "none";
+        directFields.style.display = "none";
+      } else {
+        delete this._config.entity_fan;
+        delete this._config.entity_light;
+        if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
+        if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
+        fanpyFields.style.display = "none";
         helpersFields.style.display = "";
         directFields.style.display = "none";
       }
       this._dispatch();
       this._render();
     });
+
+    const fanpyAreaSelect = root.getElementById("fanpy-area-select");
+    const fanpyFanNumber = root.getElementById("fanpy-fan-number");
+
+    const updateFanpyPrefix = () => {
+      const areaId = fanpyAreaSelect?.value;
+      if (!areaId) return;
+      const area = hass.areas[areaId];
+      if (!area) return;
+      const slug = this._slugifyArea(area);
+      const n = parseInt(fanpyFanNumber?.value || "1", 10);
+      const newPrefix = n > 1 ? `ventilador_${slug}_${n}` : `ventilador_${slug}`;
+      this._config.name = area.name.toUpperCase();
+      this._config.prefix = newPrefix;
+      this._config.fan_number = n;
+      this._dispatch();
+      const previewName = root.getElementById("preview-name");
+      if (previewName) previewName.textContent = area.name.toUpperCase();
+      const previewPrefix = root.getElementById("preview-prefix");
+      if (previewPrefix) previewPrefix.textContent = newPrefix;
+    };
+
+    if (fanpyAreaSelect) {
+      fanpyAreaSelect.addEventListener("change", updateFanpyPrefix);
+    }
+    if (fanpyFanNumber) {
+      fanpyFanNumber.addEventListener("change", updateFanpyPrefix);
+    }
 
     const areaSelect = root.getElementById("area-select");
     const directName = root.getElementById("direct-name");
@@ -240,7 +378,7 @@ class FanCustomCardEditor extends HTMLElement {
         if (!areaId) return;
         const area = hass.areas[areaId];
         if (!area) return;
-        const slug = this._slugify(area.name);
+        const slug = this._slugifyArea(area);
         this._config.name = area.name.toUpperCase();
         this._config.prefix = `ventilador_${slug}`;
         this._dispatch();
@@ -298,10 +436,39 @@ class FanCustomCardEditor extends HTMLElement {
       }
     };
 
+    const cbTimer = root.getElementById("tog-timer");
+    const timer1Input = root.getElementById("timer1-label");
+    const timer2Input = root.getElementById("timer2-label");
+    const timer3Input = root.getElementById("timer3-label");
+    const timerFields = root.getElementById("timer-fields");
+
+    const saveTimerLabels = () => {
+      if (timer1Input) {
+        const v = timer1Input.value.trim();
+        if (v && v !== "1h") this._config.timer1_label = v;
+        else delete this._config.timer1_label;
+      }
+      if (timer2Input) {
+        const v = timer2Input.value.trim();
+        if (v && v !== "2h") this._config.timer2_label = v;
+        else delete this._config.timer2_label;
+      }
+      if (timer3Input) {
+        const v = timer3Input.value.trim();
+        if (v && v !== "4h") this._config.timer3_label = v;
+        else delete this._config.timer3_label;
+      }
+      this._dispatch();
+    };
+
     const saveToggles = () => {
       if (cbLight) this._config.has_light = cbLight.checked;
       if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
+      if (cbTimer) {
+        this._config.has_timer = cbTimer.checked;
+        if (timerFields) timerFields.style.display = cbTimer.checked ? "" : "none";
+      }
       this._dispatch();
       const previewName = root.getElementById("preview-name");
       if (previewName) previewName.textContent = this._config.name || "—";
@@ -315,7 +482,11 @@ class FanCustomCardEditor extends HTMLElement {
     }
     if (cbTemp) cbTemp.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
+    if (cbTimer) cbTimer.addEventListener("change", saveToggles);
+    if (timer1Input) timer1Input.addEventListener("change", saveTimerLabels);
+    if (timer2Input) timer2Input.addEventListener("change", saveTimerLabels);
+    if (timer3Input) timer3Input.addEventListener("change", saveTimerLabels);
   }
 }
 
-customElements.define("fan-custom-card-editor", FanCustomCardEditor);
+customElements.define("fanpy-card-editor", FanpyCardEditor);

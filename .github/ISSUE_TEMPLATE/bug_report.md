@@ -22,7 +22,7 @@ If applicable, add screenshots to help explain your problem.
 
 ### System details
 - Home Assistant version:
-- Fan Custom Card version:
+- Fanpy Card version:
 
 ### Debug Logs
 Please provide any relevant logs from the browser console.

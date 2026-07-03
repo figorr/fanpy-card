@@ -38,11 +38,15 @@
   "has_light_temperature": "Temperatura de color",
   "has_light_intensity": "Intensitat de llum",
   "mode": "Mode",
+  "mode_fanpy_remote": "Fanpy Remot (Broadlink RF)",
+  "mode_fanpy_direct": "Fanpy Directe (switch.* / light.*)",
   "mode_helpers": "Helpers (scripts + input_*)",
   "mode_direct": "Directe (switch.* / light.*)",
   "entity_fan": "Entitat ventilador",
   "entity_light": "Entitat llum",
   "has_speed": "Control de velocitat",
   "entity_hint": "Escriu una ID d'entitat o selecciona de les suggerències",
-  "ventilator": "Ventilador"
+  "ventilator": "Ventilador",
+  "has_timer": "Temporitzador",
+  "timer": "Temporitzador"
 }

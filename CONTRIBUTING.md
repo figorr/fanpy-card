@@ -1,4 +1,4 @@
-# Contributing to Fan Custom Card
+# Contributing to Fanpy Card
 
 Thanks for your interest in contributing!
 
@@ -9,8 +9,8 @@ We welcome contributions in any form: bug reports, new features, or improvements
 1. **Check existing issues and discussions**
 
    See if your idea or bug has already been reported:
-   - [Issues](https://github.com/figorr/fan-custom-card/issues)
-   - [Discussions](https://github.com/figorr/fan-custom-card/discussions)
+    - [Issues](https://github.com/figorr/fanpy-card/issues)
+    - [Discussions](https://github.com/figorr/fanpy-card/discussions)
 
 2. **Fork the repository**
 
@@ -19,15 +19,15 @@ We welcome contributions in any form: bug reports, new features, or improvements
 3. **Set up your development environment**
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/fan-custom-card.git
-   cd fan-custom-card
+   git clone https://github.com/YOUR_USERNAME/fanpy-card.git
+   cd fanpy-card
    npm install
    ```
 
 4. **Start developing**
 
-   - The main code is in `src/fan-custom-card.js`.
-   - The editor code is in `src/fan-custom-card-editor.js`.
+   - The main code is in `src/fanpy-card.js`.
+   - The editor code is in `src/fanpy-card-editor.js`.
    - Translations are in `src/translations/{en,es,ca}.json`.
    - Use `npm run watch` to see changes live.
 

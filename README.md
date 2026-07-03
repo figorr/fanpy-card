@@ -1,52 +1,75 @@
-# Fan Custom Card
+# Fanpy Card
 
+![Fanpy Card Banner](images/banner.png)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![JavaScript](https://img.shields.io/badge/Language-JavaScript-yellow)
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/plugin)
+[![Release](https://github.com/figorr/fanpy-card/actions/workflows/release.yml/badge.svg)](https://github.com/figorr/fanpy-card/actions/workflows/release.yml)
+![GitHub all releases](https://img.shields.io/github/downloads/figorr/fanpy-card/total)
+![GitHub release](https://img.shields.io/github/downloads/figorr/fanpy-card/latest/total)
+![Latest release](https://img.shields.io/github/v/release/figorr/fanpy-card?label=latest)
 
-Custom Lovelace card for Home Assistant to control ceiling fans with light and speed settings.
+Fanpy Card is a custom Lovelace card for Home Assistant to control ceiling fans with light and speed settings.
 
 ## Background
 
 This card was born from a real need. I bought some ceiling fans that weren't smart — they worked via RF remote control. I discovered I could make them smart by using a **Broadlink RM4 Pro** to learn the RF commands and integrate them into Home Assistant.
 
-After teaching the commands to HA (following the [Broadlink integration docs](https://www.home-assistant.io/integrations/broadlink/)), I created **scripts** to execute them and exposed those scripts to Alexa through the [Alexa Smart Home skill](https://www.home-assistant.io/integrations/alexa.smart_home/). Voice control worked, but I wanted a proper dashboard card.
+After teaching the commands to HA, I created **scripts** to execute them. Voice control worked, but I wanted a proper dashboard card. I couldn't find an existing card that fit my needs, so I built this one.
 
-I couldn't find an existing card that fit my needs, so I built this one. The **Helpers mode** is the original design: it combines `input_boolean` entities (for state tracking), `binary_sensor` entities (for state tracking), `input_select` (for speed), `input_button` entities, and scripts that call the Broadlink RF commands.
+The card evolved to support multiple setups:
 
-Later I added a Shelly 2PM Gen 3 to control an extractor fan and its light in a bathroom. Since the Shelly exposes native `switch.*` and `light.*` entities, I added the **Direct mode** — no scripts or helpers needed, just direct service calls.
-
-This card is the result of that journey, and I hope it helps others in similar situations.
+- **Helpers mode** — the original design using `input_boolean`, `input_select`, `binary_sensor` entities + Broadlink RF scripts
+- **Direct mode** — for Shelly or native `switch.*` / `light.*` entities, no scripts needed for power/light
+- **Fanpy Remote** — works with the [Fanpy integration](https://github.com/figorr/fanpy) (auto-creates entities + Broadlink scripts)
+- **Fanpy Direct** — works with the Fanpy integration using your existing `switch.*` / `light.*` + Fanpy speed control
 
 ## Features
 
-- ✅ **Two modes**: Helpers (scripts + `input_*` entities) and Direct (native `switch.*` / `light.*` entities)
+- ✅ **Four modes**: Helpers, Direct, Fanpy Remote, Fanpy Direct
 - ✅ Control fan power (on/off)
 - ✅ Control light (on/off, warm/cold temperature, brightness up/down)
-- ✅ Speed selection (1-6) with dynamic button count
+- ✅ **SVG speed ring** with drag interaction — change speed by sliding on the ring arc
+- ✅ **Speed buttons** synchronized with the ring — tap for quick speed selection
 - ✅ Spinning fan animation with speed-dependent rotation
-- ✅ Visual editor with mode selector, area dropdown, and toggle switches
+- ✅ **Timer section** — 3 configurable timer buttons (default 1h, 2h, 4h) with editable labels
+- ✅ **Rollback** on failed commands — ring returns to previous position if the script fails
+- ✅ **Entity validation** before calling services — rejects non-existent entities immediately
+- ✅ Visual editor with mode selector, area dropdown, fan number, toggle switches, and timer labels
 - ✅ Multi-language support (en, es, ca)
-- ✅ Script override for non-standard setups (helpers mode)
-- ✅ Direct service calls for temperature and brightness (direct mode)
-- ✅ Auto-detected speed section — create `input_select.{prefix}_velocidad` and buttons appear
+- ✅ Script override for non-standard setups
+- ✅ Direct service calls for temperature and brightness (direct / fanpy_direct modes)
+- ✅ Always shows the spinning fan icon (even with 1 speed), hides controls when only 1 speed
+- ✅ Fanpy integration support — auto-discovers areas with Fanpy entities
+
+## Modes Overview
+
+| Mode | Power | Light | Speed | Best for |
+|------|-------|-------|-------|----------|
+| **Helpers** | Scripts → Broadlink RF | Scripts → Broadlink RF | Scripts → Broadlink RF | Manual setup with input_* helpers + RF scripts |
+| **Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Shelly / native switch.* / light.* + RF speed |
+| **Fanpy Remote** | Scripts → Broadlink RF | Scripts → Broadlink RF | Scripts → Broadlink RF | Fanpy integration + Broadlink RF |
+| **Fanpy Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Fanpy integration + Shelly switch.* / light.* |
+
+Speed always requires scripts (even in Direct modes) because changing fan speed typically requires sending RF commands.
 
 ## Installation
 
-### HACS (Recommended)
+### HACS (Recommended) — Not available yet
 
 1. Open HACS.
-2. Search for **Fan Custom Card** and install it.
+2. Search for **Fanpy Card** and install it.
 3. Refresh the Lovelace.
 
 ### Manual
 
-1. Download the `fan-custom-card.zip` from the latest release.
-2. Unzip and copy `fan-custom-card.js` to your Home Assistant `www` folder:
+1. Download the `fanpy-card.zip` from the latest release.
+2. Unzip and copy `fanpy-card.js` to your Home Assistant `www` folder:
    ```
-   /config/www/fan-custom-card/fan-custom-card.js
+   /config/www/fanpy-card/fanpy-card.js
    ```
 3. Add the resource in **Settings > Dashboards > Resources > Add Resource**:
-   - URL: `/local/fan-custom-card/fan-custom-card.js`
+   - URL: `/local/fanpy-card/fanpy-card.js`
    - Type: `module`
 4. Refresh (Ctrl+F5 / Cmd+Shift+R).
 
@@ -54,7 +77,17 @@ This card is the result of that journey, and I hope it helps others in similar s
 
 ### Visual Editor
 
-The editor has two modes selectable at the top.
+The visual editor adapts to the selected mode. The mode selector is at the top of the editor panel.
+
+#### Fanpy Modes (Remote / Direct)
+
+These modes work with the [Fanpy integration](https://github.com/figorr/fanpy). When you select a Fanpy mode, the editor:
+
+1. Scans your HA entities for existing Fanpy configurations
+2. Shows only areas that have Fanpy entities configured
+3. Lets you select the fan number (if multiple fans exist in the same area)
+
+Select the **Area** and **Fan #**, then configure the toggle switches. In **Fanpy Direct** mode, you must also select the **Fan entity** (`switch.*`) and **Light entity** (`light.*`).
 
 #### Helpers Mode
 
@@ -76,16 +109,48 @@ Use the toggle switches to enable/disable light, color temperature, and intensit
 
 Temperature and intensity buttons call `light.turn_on` directly with `color_temp` / `brightness_step_pct` parameters — no scripts needed.
 
-Speed buttons appear automatically when `input_select.{prefix}_velocidad` exists in your HA instance.
+Speed buttons appear automatically when the speed entity exists in your HA instance.
 
 ![Direct Mode](images/fan_custom_card_visual_editor_direct.png)
 
 ### YAML Examples
 
+#### Fanpy Remote Mode
+
+```yaml
+type: custom:fanpy-card
+mode: fanpy_remote
+name: "BODEGA"
+prefix: "ventilador_bodega"
+fan_number: 1
+has_light: true
+has_light_temperature: true
+has_light_intensity: true
+has_timer: true
+timer1_label: "1h"
+timer2_label: "2h"
+timer3_label: "4h"
+```
+
+#### Fanpy Direct Mode
+
+```yaml
+type: custom:fanpy-card
+mode: fanpy_direct
+name: "BODEGA"
+prefix: "ventilador_bodega"
+fan_number: 1
+entity_fan: switch.shelly_bodega
+entity_light: light.shelly_bodega_luz
+has_light: true
+has_light_temperature: false
+has_light_intensity: false
+```
+
 #### Helpers Mode
 
 ```yaml
-type: custom:fan-custom-card
+type: custom:fanpy-card
 name: "SALÓN"
 prefix: "ventilador_salon"
 has_light: true
@@ -99,7 +164,7 @@ has_light_intensity: true
 #### Direct Mode
 
 ```yaml
-type: custom:fan-custom-card
+type: custom:fanpy-card
 mode: direct
 name: "LAVABO ROSA"
 entity_fan: switch.lavabo_rosa_ventilador
@@ -111,37 +176,44 @@ has_light_intensity: false
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `mode` | string | `"helpers"` | Card mode: `"helpers"` (scripts + `input_*`) or `"direct"` (`switch.*` / `light.*`) |
-| `name` | string | — | Display name for the fan (e.g., `SALÓN`) |
-| `prefix` | string | — | Entity ID prefix (e.g., `ventilador_salon`). Auto-generated from name in direct mode |
-| `entity_fan` | string | — | Fan entity ID (direct mode only, e.g. `switch.lavabo_rosa_ventilador`) |
-| `entity_light` | string | — | Light entity ID (direct mode only, e.g. `light.lavabo_rosa_luz`) |
-| `has_light` | boolean | `true` | Show/hide the light section |
-| `has_light_temperature` | boolean | `true` (helpers) / `false` (direct) | Show/hide color temperature buttons |
-| `has_light_intensity` | boolean | `true` (helpers) / `false` (direct) | Show/hide brightness buttons |
-| `power_on_script` | string | — | Override: power ON script (helpers mode, default: `script.{prefix}_power_on`) |
-| `power_off_script` | string | — | Override: power OFF script (helpers mode, default: `script.{prefix}_power_off`) |
-| `luz_on_script` | string | — | Override: light ON script (helpers mode, default: `script.{prefix}_luz_on`) |
-| `luz_off_script` | string | — | Override: light OFF script (helpers mode, default: `script.{prefix}_luz_off`) |
-| `luz_fria_script` | string | — | Override: cold light script (helpers mode, default: `script.{prefix}_luz_fria`) |
-| `luz_calida_script` | string | — | Override: warm light script (helpers mode, default: `script.{prefix}_luz_calida`) |
-| `intensidad_baja_script` | string | — | Override: dim down script (helpers mode, default: `script.{prefix}_intensidad_baja`) |
-| `intensidad_alta_script` | string | — | Override: dim up script (helpers mode, default: `script.{prefix}_intensidad_alta`) |
-| `velocidad_{n}_script` | string | — | Override: speed {n} script (default: `script.{prefix}_velocidad_{n}`) |
+| Option | Type | Default | Modes | Description |
+|--------|------|---------|-------|-------------|
+| `mode` | string | `"fanpy_remote"` | all | Card mode: `"fanpy_remote"`, `"fanpy_direct"`, `"helpers"`, or `"direct"` |
+| `name` | string | — | all | Display name for the fan (e.g., `SALÓN`) |
+| `prefix` | string | — | fanpy_remote, helpers, fanpy_direct | Entity ID prefix (e.g., `ventilador_salon`) |
+| `fan_number` | number | `1` | fanpy_remote, fanpy_direct | Fan number within an area (1–5) |
+| `entity_fan` | string | — | direct, fanpy_direct | Fan entity ID (e.g. `switch.lavabo_rosa_ventilador`) |
+| `entity_light` | string | — | direct, fanpy_direct | Light entity ID (e.g. `light.lavabo_rosa_luz`) |
+| `has_light` | boolean | `true` | all | Show/hide the light section |
+| `has_light_temperature` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide color temperature buttons |
+| `has_light_intensity` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide brightness buttons |
+| `power_on_script` | string | — | fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
+| `power_off_script` | string | — | fanpy_remote, helpers | Override: power OFF script (default: `script.{prefix}_power_off`) |
+| `luz_on_script` | string | — | fanpy_remote, helpers | Override: light ON script (default: `script.{prefix}_luz_on`) |
+| `luz_off_script` | string | — | fanpy_remote, helpers | Override: light OFF script (default: `script.{prefix}_luz_off`) |
+| `luz_fria_script` | string | — | fanpy_remote, helpers | Override: cold light script (default: `script.{prefix}_luz_fria`) |
+| `luz_calida_script` | string | — | fanpy_remote, helpers | Override: warm light script (default: `script.{prefix}_luz_calida`) |
+| `intensidad_baja_script` | string | — | fanpy_remote, helpers | Override: dim down script (default: `script.{prefix}_intensidad_baja`) |
+| `intensidad_alta_script` | string | — | fanpy_remote, helpers | Override: dim up script (default: `script.{prefix}_intensidad_alta`) |
+| `velocidad_{n}_script` | string | — | all | Override: speed {n} script (default: `script.{prefix}_velocidad_{n}`) |
+| `has_timer` | boolean | `true` | all | Show/hide the timer section |
+| `timer1_label` | string | `"1h"` | all | Label for timer button 1 (calls `script.{prefix}_timer_1`) |
+| `timer2_label` | string | `"2h"` | all | Label for timer button 2 (calls `script.{prefix}_timer_2`) |
+| `timer3_label` | string | `"4h"` | all | Label for timer button 3 (calls `script.{prefix}_timer_3`) |
 
-### Helpers Mode — Auto-generated Entity & Script Names
+### Auto-generated Entity & Script Names (Helpers / Fanpy Remote)
 
 If no override is specified, the card auto-generates names from the prefix:
 
 | Entity | Auto-generated ID |
 |--------|------------------|
-| Power state | `input_boolean.{prefix}_power` |
-| Light state | `input_boolean.{prefix}_luz` |
-| Speed state | `input_select.{prefix}_velocidad` |
-| Power sensor | `binary_sensor.{prefix}_power` |
-| Light sensor | `binary_sensor.{prefix}_luz` |
+| Power state (helpers) | `input_boolean.{prefix}_power` |
+| Light state (helpers) | `input_boolean.{prefix}_luz` |
+| Power state (fanpy_remote) | `switch.fanpy_{prefix}_power` |
+| Light state (fanpy_remote) | `switch.fanpy_{prefix}_luz` |
+| Speed state | `{domain}.{prefix}_velocidad` |
+| Power sensor | `binary_sensor.{fanpy_prefix}{prefix}_power` |
+| Light sensor | `binary_sensor.{fanpy_prefix}{prefix}_luz` |
 | Power ON | `script.{prefix}_power_on` |
 | Power OFF | `script.{prefix}_power_off` |
 | Light ON | `script.{prefix}_luz_on` |
@@ -150,28 +222,28 @@ If no override is specified, the card auto-generates names from the prefix:
 | Warm light | `script.{prefix}_luz_calida` |
 | Dim down | `script.{prefix}_intensidad_baja` |
 | Dim up | `script.{prefix}_intensidad_alta` |
-| Speed 1-6 | `script.{prefix}_velocidad_{1-6}` |
+| Speed 1–N | `script.{prefix}_velocidad_{1-N}` |
+| Timer 1 | `script.{prefix}_timer_1` |
+| Timer 2 | `script.{prefix}_timer_2` |
+| Timer 3 | `script.{prefix}_timer_3` |
 
-### Helpers Mode — Scripts Example (Broadlink RF)
+Where `{fanpy_prefix}` is `fanpy_` for fanpy modes and empty for helpers mode.  
+Where `{domain}` is `input_select` (helpers) or `select` (fanpy modes).
 
-Below is a real `scripts.yaml` example for a ceiling fan with 6 speeds and light (temperature + intensity), controlled via a Broadlink RM4 Pro.
+### Helpers Mode — Required Entities
 
-**Important:** For the card to work in Helpers mode you must manually create:
+For the card to work in Helpers mode you must manually create:
+
 - **`input_boolean.{prefix}_power`** — tracks fan power state
 - **`input_boolean.{prefix}_luz`** — tracks light state
 - **`binary_sensor.{prefix}_power`** — tracks power sensor state
 - **`binary_sensor.{prefix}_luz`** — tracks light sensor state
 - **`input_select.{prefix}_velocidad`** — tracks speed, with options `1`, `2`, `3`, etc. (one per speed level)
-- **`input_button.{prefix}_power_on`** 
-- **`input_button.{prefix}_power_off`**
-- **`input_button.{prefix}_luz_on`**
-- **`input_button.{prefix}_luz_off`**
-- **`input_button.{prefix}_luz_calida`**
-- **`input_button.{prefix}_luz_fria`**
-- **`input_button.{prefix}_intensidad_alta`**
-- **`input_button.{prefix}_intensidad_baja`**
-- **`input_button.{prefix}_velocidad_1`**, **`input_button.{prefix}_velocidad_2`** etc. (one per speed level)
 - All the **scripts** below (they send RF commands via Broadlink and update the helper entities)
+
+### Helpers Mode — Scripts Example (Broadlink RF)
+
+Below is a real `scripts.yaml` example for a ceiling fan with 6 speeds and light (temperature + intensity), controlled via a Broadlink RM4 Pro.
 
 Each script sends the RF command and updates the corresponding helper entity so the card reflects the correct state.
 
@@ -492,11 +564,22 @@ You can test the learned command using the **`remote.send_command`**.
 
 ## Card Preview
 
-The card renders a compact control panel. Example layout with all sections visible:
+The card renders a compact control panel with an SVG speed ring. Example layout with all sections visible:
 
 ```
 ┌─────────────────────────────┐
 │ 🌀 SALÓN             ● ON   │
+│                             │
+│      ╭─────────────╮        │
+│    ╱  ╱           ╲  ╲      │
+│   │  │    🌀       │  │     │
+│   │  │      3      │  │     │
+│   │  │  VELOCIDAD  │  │     │
+│    ╲  ╲           ╱  ╱      │
+│      ╰─────────────╯        │
+│      Speed 3/6              │
+│  ───────────────────────    │
+│  1   2   3   4   5   6      │
 │                             │
 │ LUZ                         │
 │          [💡]               │
@@ -507,26 +590,26 @@ The card renders a compact control panel. Example layout with all sections visib
 │ INTENSIDAD LUZ              │
 │     [−]         [+]         │
 │                             │
-│ VELOCIDAD                   │
-│  1   2   3   4   5   6      │
-│         ●                   │
-│       Speed 3/6             │
+│ TIMER                       │
+│    [1h]   [2h]   [4h]       │
 └─────────────────────────────┘
 ```
 
-- The fan icon spins when the fan is ON, with speed depending on the selected velocity.
+- The SVG speed ring shows the active speed as a 270° arc. Drag on the ring to change speed, or tap the number buttons below.
+- The fan icon at the center spins when the fan is ON, with speed-dependent animation.
 - Active speed is highlighted with the theme accent color.
 - Light button shows yellow when light is on.
-- Sections can be hidden via toggle switches in the editor or `has_light`, `has_light_temperature`, `has_light_intensity` YAML options.
+- Timer section is optional (`has_timer: false`) and each button label is configurable (`timer1_label` etc.).
+- Sections can be hidden via toggle switches in the editor or YAML options.
 
-  ![Fan Custom Card Example](images/fan_custom_card.png)
+  ![Fanpy Card Example](images/fan_custom_card.png)
 
 ## Development
 
 ```bash
 # Clone
-git clone https://github.com/figorr/fan-custom-card.git
-cd fan-custom-card
+git clone https://github.com/figorr/fanpy-card.git
+cd fanpy-card
 
 # Install dependencies
 npm install

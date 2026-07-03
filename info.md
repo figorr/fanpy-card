@@ -1,6 +1,6 @@
-# Fan Custom Card
+# Fanpy Card
 
-Fan Custom Card is a custom card for Home Assistant that provides a beautiful and intuitive interface to control ceiling fans with light and speed settings.
+Fanpy Card is a custom card for Home Assistant that provides a beautiful and intuitive interface to control ceiling fans with light and speed settings.
 
 ## Features
 
@@ -11,4 +11,4 @@ Fan Custom Card is a custom card for Home Assistant that provides a beautiful an
 - Visual editor for easy configuration
 - Multi-language support (en, es, ca)
 
-For more information, check the [README](https://github.com/figorr/fan-custom-card).
+For more information, check the [README](https://github.com/figorr/fanpy-card).

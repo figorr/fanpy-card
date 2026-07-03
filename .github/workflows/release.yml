@@ -56,23 +56,23 @@ jobs:
         if: steps.get_tag.outputs.release_tag != ''
         run: |
           rm -rf tmp
-          mkdir -p tmp/fan-custom-card
-          cp dist/fan-custom-card.js tmp/fan-custom-card/
-          cp dist/fan-custom-card-editor.js tmp/fan-custom-card/
-          cp -r src/translations tmp/fan-custom-card/
+          mkdir -p tmp/fanpy-card
+          cp dist/fanpy-card.js tmp/fanpy-card/
+          cp dist/fanpy-card-editor.js tmp/fanpy-card/
+          cp -r src/translations tmp/fanpy-card/
 
       - name: Create ZIP
         if: steps.get_tag.outputs.release_tag != ''
         run: |
           cd tmp
-          zip -r ../fan-custom-card.zip fan-custom-card
+          zip -r ../fanpy-card.zip fanpy-card
           cd ..
 
       - name: Upload ZIP to release
         if: steps.get_tag.outputs.release_tag != ''
         uses: softprops/action-gh-release@v1
         with:
-          files: fan-custom-card.zip
+          files: fanpy-card.zip
           tag_name: ${{ steps.get_tag.outputs.release_tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

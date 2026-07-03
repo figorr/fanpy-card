@@ -12,8 +12,8 @@
       "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
     }],
     ["@semantic-release/github", {
-      "assets": ["dist/fan-custom-card.js", "dist/fan-custom-card-editor.js"]
+      "assets": ["dist/fanpy-card.js", "dist/fanpy-card-editor.js"]
     }]
   ],
-  "repositoryUrl": "https://github.com/figorr/fan-custom-card"
+  "repositoryUrl": "https://github.com/figorr/fanpy-card"
 }
