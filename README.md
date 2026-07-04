@@ -99,7 +99,7 @@ Use the toggle switches to show/hide light, temperature, and intensity controls.
 
 To override scripts, switch to the **code editor** (YAML mode).
 
-![Helpers Mode](images/fan_custom_card_visual_editor_helpers.png)
+![Helpers Mode](images/fanpy_card_visual_editor_helpers.png)
 
 #### Direct Mode
 
@@ -111,7 +111,7 @@ Temperature and intensity buttons call `light.turn_on` directly with `color_temp
 
 Speed buttons appear automatically when the speed entity exists in your HA instance.
 
-![Direct Mode](images/fan_custom_card_visual_editor_direct.png)
+![Direct Mode](images/fanpy_card_visual_editor_direct.png)
 
 ### YAML Examples
 
@@ -613,7 +613,13 @@ The card renders a compact control panel with an SVG speed ring. Example layout 
 - Timer section is optional (`has_timer: false` / `num_timers: 0`) and calls native `timer.start`/`timer.cancel` on the configured timer entities. Each button label is configurable (`timer1_label` etc.).
 - Sections can be hidden via toggle switches in the editor or YAML options.
 
-  ![Fanpy Card Example](images/fan_custom_card.png)
+  - **Card example**
+
+    ![Fanpy Card Example](images/fanpy_card.png)
+
+  - **Card example (without speed ring)**
+
+    ![Fanpy Card Example No Ring](images/fanpy_card_no_ring.png)
 
 ## Development
 
