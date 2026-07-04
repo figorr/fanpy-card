@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/figorr/fanpy-card/compare/v2.0.0...v2.0.1) (2026-07-04)
+
+
+### Bug Fixes
+
+* update images ([e7bdb1d](https://github.com/figorr/fanpy-card/commit/e7bdb1d2cc6737641f99fc3402d6af02f8f3eef9))
+* update README ([6d0849b](https://github.com/figorr/fanpy-card/commit/6d0849b754402c700fb2c379ea5a6023b1e4575d))
+
 # [2.0.0](https://github.com/figorr/fanpy-card/compare/v1.0.0...v2.0.0) (2026-07-04)
 
 
