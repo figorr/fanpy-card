@@ -1,3 +1,27 @@
+# [2.0.0](https://github.com/figorr/fanpy-card/compare/v1.0.0...v2.0.0) (2026-07-04)
+
+
+* feat!: timer redesign — native timer.start/cancel, auto power-off, visual improvements ([0b874b1](https://github.com/figorr/fanpy-card/commit/0b874b1ea1f9f3cc822d0c6890c496f8306de9db))
+
+
+### BREAKING CHANGES
+
+* Card now calls native timer.start/cancel services instead of timer scripts.
+* Requires fanpy integration v2.0.0 for select.fanpy_*_num_timers entity.
+* timer1_entity/timer2_entity/timer3_entity config options added; old script-based timer configs no longer work.
+
+Features:
+- Auto power-off on timer expiry via state listener (active -> idle)
+- User-cancelled timers are tracked to prevent false power-off triggers
+- num_timers read from select.fanpy_*_num_timers entity (fallback to config)
+- Timer entity selectors filtered by prefix, showing friendly_name
+- Default labels: 1h, 2h, 4h
+- has_ring toggle to hide the SVG speed ring (keep speed buttons visible)
+- VELOCIDAD label added above speed number buttons
+- Speed button visual: blue fill when ON+selected, blue outline when OFF+selected
+- Timer buttons disabled via CSS when fan is off
+- Clean name/prefix when switching card modes in editor
+
 # 1.0.0 (2026-07-03)
 
 
