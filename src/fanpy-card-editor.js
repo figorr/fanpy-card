@@ -63,6 +63,39 @@ class FanpyCardEditor extends HTMLElement {
     return areaFans;
   }
 
+  _numTimers() {
+    const c = this._config;
+    const pp = c.prefix || `ventilador_${this._slugify(c.name || "")}`;
+    const entityId = `select.fanpy_${pp}_num_timers`;
+    const state = this._hass?.states?.[entityId]?.state;
+    if (state !== undefined) return parseInt(state, 10) || 0;
+    if (c.num_timers !== undefined) return parseInt(c.num_timers, 10) || 0;
+    return 3;
+  }
+
+  _renderTimerRows(c, timerEntities) {
+    const n = this._numTimers();
+    if (n <= 0) return "";
+    const defaultLabels = { 1: "1h", 2: "2h", 3: "4h" };
+    return Array.from({ length: n }, (_, i) => {
+      const num = i + 1;
+      const entKey = `timer${num}_entity`;
+      const labelKey = `timer${num}_label`;
+      const defaultLabel = defaultLabels[num] || `${num}h`;
+      return `<div style="display:flex;gap:6px;align-items:center;">
+        <select id="timer${num}-entity" style="flex:1;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;cursor:pointer;">
+          <option value="">— Timer ${num} —</option>
+          ${timerEntities.map(e => {
+            const friendly = this._hass?.states?.[e]?.attributes?.friendly_name || e;
+            return `<option value="${e}" ${e === (c[entKey] || "") ? "selected" : ""}>${friendly}</option>`;
+          }).join("")}
+        </select>
+        <input type="text" id="timer${num}-label" value="${c[labelKey] || defaultLabel}"
+          style="width:80px;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;text-align:center;">
+      </div>`;
+    }).join("");
+  }
+
   _render() {
     const root = this.shadowRoot;
     const c = this._config;
@@ -106,8 +139,13 @@ class FanpyCardEditor extends HTMLElement {
     const hasLight = c.has_light !== false;
     const hasTemp = isEntityMode ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
     const hasInt = isEntityMode ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
+    const hasRing = c.has_ring !== false;
     const fanEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("switch.")).sort();
     const lightEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("light.")).sort();
+    const timerEntities = Object.keys(hass.states || {})
+      .filter(e => e.startsWith("timer."))
+      .filter(e => !prefix || e.includes(prefix))
+      .sort();
 
     root.innerHTML = `<style>
       .editor { padding: 8px 0; }
@@ -207,9 +245,9 @@ class FanpyCardEditor extends HTMLElement {
         ${isDirect ? `
         <div class="field-row">
           <div>
-            <span class="field-label">${L("name")}</span>
+            <span class="field-label">${L("area")}</span>
             <select id="direct-name">
-              <option value="">— ${L("name")} —</option>
+              <option value="">— ${L("select_area")} —</option>
               ${areas.map(([id, a]) =>
                 `<option value="${a.name.toUpperCase()}" ${a.name.toUpperCase() === (c.name || "") ? "selected" : ""}>${a.name}</option>`
               ).join("")}
@@ -222,18 +260,20 @@ class FanpyCardEditor extends HTMLElement {
             <span class="field-label">${L("entity_fan")}</span>
             <select id="entity-fan">
               <option value="">— ${L("entity_fan")} —</option>
-              ${fanEntities.map(e =>
-                `<option value="${e}" ${e === (c.entity_fan || "") ? "selected" : ""}>${e}</option>`
-              ).join("")}
+              ${fanEntities.map(e => {
+                const friendly = hass.states?.[e]?.attributes?.friendly_name || e;
+                return `<option value="${e}" ${e === (c.entity_fan || "") ? "selected" : ""}>${friendly}</option>`;
+              }).join("")}
             </select>
           </div>
           <div>
             <span class="field-label">${L("entity_light")}</span>
             <select id="entity-light">
               <option value="">— ${L("entity_light")} —</option>
-              ${lightEntities.map(e =>
-                `<option value="${e}" ${e === (c.entity_light || "") ? "selected" : ""}>${e}</option>`
-              ).join("")}
+              ${lightEntities.map(e => {
+                const friendly = hass.states?.[e]?.attributes?.friendly_name || e;
+                return `<option value="${e}" ${e === (c.entity_light || "") ? "selected" : ""}>${friendly}</option>`;
+              }).join("")}
             </select>
           </div>
         </div>
@@ -242,6 +282,15 @@ class FanpyCardEditor extends HTMLElement {
       <div class="section-title">${L("basic")}</div>
       <div class="field-row">
         <div>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-ring" ${hasRing ? "checked" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-ring">${L("has_ring")}</label>
+          </div>
+
           <div class="toggle-row">
             <label class="toggle-switch">
               <input type="checkbox" id="tog-light" ${hasLight ? "checked" : ""}>
@@ -271,26 +320,15 @@ class FanpyCardEditor extends HTMLElement {
 
           <div class="toggle-row">
             <label class="toggle-switch">
-              <input type="checkbox" id="tog-timer" ${c.has_timer !== false ? "checked" : ""}>
+              <input type="checkbox" id="tog-timer" ${c.has_timer !== false ? "checked" : ""} ${this._numTimers() === 0 ? "disabled" : ""}>
               <span class="toggle-track"></span>
               <span class="toggle-thumb"></span>
             </label>
-            <label for="tog-timer">${L("has_timer")}</label>
+            <label for="tog-timer" class="${this._numTimers() === 0 ? "disabled" : ""}">${L("has_timer")}</label>
           </div>
           <div id="timer-fields" style="display:${c.has_timer !== false ? "" : "none"};margin-left:24px;margin-top:4px;">
-            <div style="display:flex;gap:6px;">
-              <div style="flex:1;min-width:0;">
-                <input type="text" id="timer1-label" value="${c.timer1_label || "1h"}"
-                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
-              </div>
-              <div style="flex:1;min-width:0;">
-                <input type="text" id="timer2-label" value="${c.timer2_label || "2h"}"
-                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
-              </div>
-              <div style="flex:1;min-width:0;">
-                <input type="text" id="timer3-label" value="${c.timer3_label || "4h"}"
-                  style="width:100%;padding:6px 8px;border:1px solid var(--divider-color,rgba(0,0,0,0.15));border-radius:6px;font-size:13px;font-family:var(--paper-font-body_-_font-family,inherit);background:var(--card-background-color,var(--ha-card-background,#fff));color:var(--primary-text-color,#212121);outline:none;box-sizing:border-box;">
-              </div>
+            <div id="timer-rows" style="display:flex;flex-direction:column;gap:6px;">
+              ${this._renderTimerRows(c, timerEntities)}
             </div>
           </div>
       </div>
@@ -315,6 +353,10 @@ class FanpyCardEditor extends HTMLElement {
       if (newMode === "direct" || newMode === "fanpy_direct") {
         this._config.has_light_temperature = false;
         this._config.has_light_intensity = false;
+        if (newMode === "direct") {
+          delete this._config.name;
+          delete this._config.prefix;
+        }
         fanpyFields.style.display = newMode === "fanpy_direct" ? "" : "none";
         helpersFields.style.display = "none";
         directFields.style.display = "";
@@ -329,6 +371,8 @@ class FanpyCardEditor extends HTMLElement {
       } else {
         delete this._config.entity_fan;
         delete this._config.entity_light;
+        delete this._config.name;
+        delete this._config.prefix;
         if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
         if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
         fanpyFields.style.display = "none";
@@ -391,10 +435,17 @@ class FanpyCardEditor extends HTMLElement {
 
     if (directName) {
       directName.addEventListener("change", () => {
-        this._config.name = directName.value || undefined;
+        const val = directName.value || "";
+        this._config.name = val || undefined;
+        if (val) {
+          const slug = val.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+          this._config.prefix = `ventilador_${slug}`;
+        } else {
+          delete this._config.prefix;
+        }
         this._dispatch();
         const previewName = root.getElementById("preview-name");
-        if (previewName) previewName.textContent = directName.value || "—";
+        if (previewName) previewName.textContent = val || "—";
       });
     }
 
@@ -414,6 +465,7 @@ class FanpyCardEditor extends HTMLElement {
     const cbLight = root.getElementById("tog-light");
     const cbTemp = root.getElementById("tog-temp");
     const cbInt = root.getElementById("tog-int");
+    const cbRing = root.getElementById("tog-ring");
 
     const toggleLabel = (cb) => {
       if (!cb) return;
@@ -437,26 +489,32 @@ class FanpyCardEditor extends HTMLElement {
     };
 
     const cbTimer = root.getElementById("tog-timer");
-    const timer1Input = root.getElementById("timer1-label");
-    const timer2Input = root.getElementById("timer2-label");
-    const timer3Input = root.getElementById("timer3-label");
     const timerFields = root.getElementById("timer-fields");
 
     const saveTimerLabels = () => {
-      if (timer1Input) {
-        const v = timer1Input.value.trim();
-        if (v && v !== "1h") this._config.timer1_label = v;
-        else delete this._config.timer1_label;
+      const n = this._numTimers();
+      const defaultLabels = { 1: "1h", 2: "2h", 3: "4h" };
+      for (let i = 1; i <= n; i++) {
+        const labelEl = root.getElementById(`timer${i}-label`);
+        const entEl = root.getElementById(`timer${i}-entity`);
+        const labelKey = `timer${i}_label`;
+        const entKey = `timer${i}_entity`;
+        const defaultLabel = defaultLabels[i] || `${i}h`;
+        if (labelEl) {
+          const v = labelEl.value.trim();
+          if (v && v !== defaultLabel) this._config[labelKey] = v;
+          else delete this._config[labelKey];
+        }
+        if (entEl) {
+          const v = entEl.value.trim();
+          if (v) this._config[entKey] = v;
+          else delete this._config[entKey];
+        }
       }
-      if (timer2Input) {
-        const v = timer2Input.value.trim();
-        if (v && v !== "2h") this._config.timer2_label = v;
-        else delete this._config.timer2_label;
-      }
-      if (timer3Input) {
-        const v = timer3Input.value.trim();
-        if (v && v !== "4h") this._config.timer3_label = v;
-        else delete this._config.timer3_label;
+      // Clean up any stale keys beyond current count
+      for (let i = n + 1; i <= 3; i++) {
+        delete this._config[`timer${i}_label`];
+        delete this._config[`timer${i}_entity`];
       }
       this._dispatch();
     };
@@ -465,6 +523,7 @@ class FanpyCardEditor extends HTMLElement {
       if (cbLight) this._config.has_light = cbLight.checked;
       if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
+      if (cbRing) this._config.has_ring = cbRing.checked;
       if (cbTimer) {
         this._config.has_timer = cbTimer.checked;
         if (timerFields) timerFields.style.display = cbTimer.checked ? "" : "none";
@@ -482,10 +541,15 @@ class FanpyCardEditor extends HTMLElement {
     }
     if (cbTemp) cbTemp.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
+    if (cbRing) cbRing.addEventListener("change", saveToggles);
     if (cbTimer) cbTimer.addEventListener("change", saveToggles);
-    if (timer1Input) timer1Input.addEventListener("change", saveTimerLabels);
-    if (timer2Input) timer2Input.addEventListener("change", saveTimerLabels);
-    if (timer3Input) timer3Input.addEventListener("change", saveTimerLabels);
+    const n = this._numTimers();
+    for (let i = 1; i <= n; i++) {
+      const l = root.getElementById(`timer${i}-label`);
+      const e = root.getElementById(`timer${i}-entity`);
+      if (l) l.addEventListener("change", saveTimerLabels);
+      if (e) e.addEventListener("change", saveTimerLabels);
+    }
   }
 }
 

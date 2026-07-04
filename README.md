@@ -32,7 +32,7 @@ The card evolved to support multiple setups:
 - ✅ **SVG speed ring** with drag interaction — change speed by sliding on the ring arc
 - ✅ **Speed buttons** synchronized with the ring — tap for quick speed selection
 - ✅ Spinning fan animation with speed-dependent rotation
-- ✅ **Timer section** — 3 configurable timer buttons (default 1h, 2h, 4h) with editable labels
+- ✅ **Timer section** — up to 3 configurable timer buttons with editable labels. Uses native `timer.start`/`timer.cancel` services. Button count dynamically read from `select.fanpy_<prefix>_num_timers` (set via the Fanpy integration config flow).
 - ✅ **Rollback** on failed commands — ring returns to previous position if the script fails
 - ✅ **Entity validation** before calling services — rejects non-existent entities immediately
 - ✅ Visual editor with mode selector, area dropdown, fan number, toggle switches, and timer labels
@@ -126,9 +126,12 @@ fan_number: 1
 has_light: true
 has_light_temperature: true
 has_light_intensity: true
-has_timer: true
+num_timers: 3
+timer1_entity: timer.ventilador_bodega_timer_1
 timer1_label: "1h"
+timer2_entity: timer.ventilador_bodega_timer_2
 timer2_label: "2h"
+timer3_entity: timer.ventilador_bodega_timer_3
 timer3_label: "4h"
 ```
 
@@ -145,6 +148,11 @@ entity_light: light.shelly_bodega_luz
 has_light: true
 has_light_temperature: false
 has_light_intensity: false
+num_timers: 2
+timer1_entity: timer.ventilador_bodega_timer_1
+timer1_label: "1h"
+timer2_entity: timer.ventilador_bodega_timer_2
+timer2_label: "2h"
 ```
 
 #### Helpers Mode
@@ -156,6 +164,7 @@ prefix: "ventilador_salon"
 has_light: true
 has_light_temperature: true
 has_light_intensity: true
+has_ring: true  # set to false to hide the SVG ring and show only speed buttons
 # Optional: override specific scripts if they differ from the auto-generated names
 # power_on_script: "script.mi_script_personalizado"
 # power_off_script: "script.otro_script_apagar"
@@ -187,6 +196,7 @@ has_light_intensity: false
 | `has_light` | boolean | `true` | all | Show/hide the light section |
 | `has_light_temperature` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide color temperature buttons |
 | `has_light_intensity` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide brightness buttons |
+| `has_ring` | boolean | `true` | all | Show/hide the SVG speed ring and status text. When disabled, only the speed number buttons are shown |
 | `power_on_script` | string | — | fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
 | `power_off_script` | string | — | fanpy_remote, helpers | Override: power OFF script (default: `script.{prefix}_power_off`) |
 | `luz_on_script` | string | — | fanpy_remote, helpers | Override: light ON script (default: `script.{prefix}_luz_on`) |
@@ -196,10 +206,14 @@ has_light_intensity: false
 | `intensidad_baja_script` | string | — | fanpy_remote, helpers | Override: dim down script (default: `script.{prefix}_intensidad_baja`) |
 | `intensidad_alta_script` | string | — | fanpy_remote, helpers | Override: dim up script (default: `script.{prefix}_intensidad_alta`) |
 | `velocidad_{n}_script` | string | — | all | Override: speed {n} script (default: `script.{prefix}_velocidad_{n}`) |
-| `has_timer` | boolean | `true` | all | Show/hide the timer section |
-| `timer1_label` | string | `"1h"` | all | Label for timer button 1 (calls `script.{prefix}_timer_1`) |
-| `timer2_label` | string | `"2h"` | all | Label for timer button 2 (calls `script.{prefix}_timer_2`) |
-| `timer3_label` | string | `"4h"` | all | Label for timer button 3 (calls `script.{prefix}_timer_3`) |
+| `num_timers` | number | `3` | all | Number of timer buttons to show (0–3, read from `select.fanpy_<prefix>_num_timers` if available; falls back to this config value) |
+| `has_timer` | boolean | `true` | all | Show/hide the timer section (overridden by `num_timers` when 0) |
+| `timer1_entity` | string | — | all | Timer entity ID for button 1 (e.g. `timer.ventilador_salon_timer_1`). Falls back to `timer.{prefix}_timer_1` |
+| `timer2_entity` | string | — | all | Timer entity ID for button 2 |
+| `timer3_entity` | string | — | all | Timer entity ID for button 3 |
+| `timer1_label` | string | `"1h"` | all | Label for timer button 1 (calls `timer.start` on `timer1_entity`) |
+| `timer2_label` | string | `"2h"` | all | Label for timer button 2 (calls `timer.start` on `timer2_entity`) |
+| `timer3_label` | string | `"4h"` | all | Label for timer button 3 (calls `timer.start` on `timer3_entity`) |
 
 ### Auto-generated Entity & Script Names (Helpers / Fanpy Remote)
 
@@ -223,9 +237,6 @@ If no override is specified, the card auto-generates names from the prefix:
 | Dim down | `script.{prefix}_intensidad_baja` |
 | Dim up | `script.{prefix}_intensidad_alta` |
 | Speed 1–N | `script.{prefix}_velocidad_{1-N}` |
-| Timer 1 | `script.{prefix}_timer_1` |
-| Timer 2 | `script.{prefix}_timer_2` |
-| Timer 3 | `script.{prefix}_timer_3` |
 
 Where `{fanpy_prefix}` is `fanpy_` for fanpy modes and empty for helpers mode.  
 Where `{domain}` is `input_select` (helpers) or `select` (fanpy modes).
@@ -599,7 +610,7 @@ The card renders a compact control panel with an SVG speed ring. Example layout 
 - The fan icon at the center spins when the fan is ON, with speed-dependent animation.
 - Active speed is highlighted with the theme accent color.
 - Light button shows yellow when light is on.
-- Timer section is optional (`has_timer: false`) and each button label is configurable (`timer1_label` etc.).
+- Timer section is optional (`has_timer: false` / `num_timers: 0`) and calls native `timer.start`/`timer.cancel` on the configured timer entities. Each button label is configurable (`timer1_label` etc.).
 - Sections can be hidden via toggle switches in the editor or YAML options.
 
   ![Fanpy Card Example](images/fan_custom_card.png)

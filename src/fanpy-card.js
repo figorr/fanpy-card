@@ -237,6 +237,15 @@ const STYLE = `
     opacity: 0.85;
     pointer-events: none;
   }
+  .ctrl.speed-selected.speed-active {
+    background: var(--primary-color, #03a9f4);
+    color: #fff;
+  }
+  .power-off .ctrl.speed-selected {
+    background: var(--secondary-background-color, #f5f5f5);
+    color: var(--primary-text-color, #212121);
+    box-shadow: inset 0 0 0 2px var(--primary-color, #03a9f4);
+  }
   .ctrl.luz-active {
     background: #ffd54f;
     color: #333;
@@ -269,8 +278,18 @@ const STYLE = `
     color: var(--primary-color, #03a9f4);
     background: color-mix(in srgb, var(--primary-color, #03a9f4) 6%, transparent);
   }
+  .timer-btn.luz-active {
+    background: var(--primary-color, #03a9f4);
+    color: #fff;
+    border-color: var(--primary-color, #03a9f4);
+  }
   .timer-btn:active {
     transform: scale(0.94);
+  }
+  .power-off .timer-btn {
+    opacity: 0.35;
+    cursor: default;
+    pointer-events: none;
   }
   .timer-section {
     margin-top: 6px;
@@ -298,6 +317,7 @@ class FanpyCard extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._config = {};
     this._hass = null;
+    this._timerCancelPending = new Set();
   }
 
   static async getConfigElement() {
@@ -320,7 +340,23 @@ class FanpyCard extends HTMLElement {
   }
 
   set hass(hass) {
+    const prevHass = this._hass;
     this._hass = hass;
+    if (prevHass) {
+      const n = this._numTimers();
+      for (let i = 1; i <= n; i++) {
+        const e = this._timerEntity(i);
+        const ps = prevHass.states?.[e]?.state;
+        const cs = hass.states?.[e]?.state;
+        if (ps === "active" && cs === "idle") {
+          if (this._timerCancelPending.has(e)) {
+            this._timerCancelPending.delete(e);
+          } else {
+            this._autoPowerOff();
+          }
+        }
+      }
+    }
     this._render();
   }
 
@@ -352,6 +388,16 @@ class FanpyCard extends HTMLElement {
 
   _mode() {
     return this._config.mode || "fanpy_remote";
+  }
+
+  _numTimers() {
+    const config = this._config;
+    const pp = config.prefix || `ventilador_${this._slugify(config.name)}`;
+    const entityId = `select.fanpy_${pp}_num_timers`;
+    const state = this._hass?.states?.[entityId]?.state;
+    if (state !== undefined) return parseInt(state, 10) || 0;
+    if (config.num_timers !== undefined) return parseInt(config.num_timers, 10) || 0;
+    return 3;
   }
 
   _mapEntity(type) {
@@ -393,12 +439,22 @@ class FanpyCard extends HTMLElement {
 
     switch (cmd) {
       case "power": {
+        const on = isDirect
+          ? this._state(config.entity_fan) === "on"
+          : this._state(this._mapEntity("power_state")) === "on";
         if (isDirect) {
-          const on = this._state(config.entity_fan) === "on";
           p = this._callService("switch", on ? "turn_off" : "turn_on", { entity_id: config.entity_fan });
         } else {
-          const on = this._state(this._mapEntity("power_state")) === "on";
           p = this._call(on ? scriptFor("power_off_script", "power_off") : scriptFor("power_on_script", "power_on"));
+        }
+        if (on && config.has_timer !== false) {
+          for (let i = 1; i <= 3; i++) {
+            const te = this._timerEntity(i);
+            if (this._hass?.states?.[te]?.state === "active") {
+              this._timerCancelPending.add(te);
+              this._callService("timer", "cancel", { entity_id: te });
+            }
+          }
         }
         break;
       }
@@ -435,11 +491,47 @@ class FanpyCard extends HTMLElement {
       case "vel":
         p = this._call(scriptFor(`velocidad_${data}_script`, `velocidad_${data}`));
         break;
-      case "timer":
-        p = this._call(scriptFor(`timer_${data}_script`, `timer_${data}`));
+      case "timer": {
+        const pow = this._state(this._mapEntity("power_state"));
+        if (pow !== "on") return;
+        const te = this._timerEntity(data);
+        if (this._timerRunning(data)) {
+          this._timerCancelPending.add(te);
+          this._callService("timer", "cancel", { entity_id: te });
+          return;
+        }
+        for (let i = 1; i <= 3; i++) {
+          if (i !== parseInt(data) && this._timerRunning(i)) {
+            const ot = this._timerEntity(i);
+            this._timerCancelPending.add(ot);
+            this._callService("timer", "cancel", { entity_id: ot });
+          }
+        }
+        p = this._callService("timer", "start", { entity_id: te });
         break;
+      }
     }
     return p;
+  }
+
+  _timerEntity(timerNum) {
+    return this._config[`timer${timerNum}_entity`] || `timer.timer_${this._config.prefix || `ventilador_${this._slugify(this._config.name)}`}_${timerNum}`;
+  }
+
+  _timerRunning(timerNum) {
+    const entity = this._timerEntity(timerNum);
+    return this._hass?.states?.[entity]?.state === "active";
+  }
+
+  _autoPowerOff() {
+    const config = this._config;
+    const mode = this._mode();
+    if (mode === "direct" || mode === "fanpy_direct") {
+      this._callService("switch", "turn_off", { entity_id: config.entity_fan });
+    } else {
+      const s = (key, fallback) => config[key] || `script.${config.prefix || `ventilador_${this._slugify(config.name)}`}_${fallback}`;
+      this._call(s("power_off_script", "power_off"));
+    }
   }
 
   _getActiveSpeed() {
@@ -470,8 +562,12 @@ class FanpyCard extends HTMLElement {
 
     const bgArc = arc(0, 0, R, 0, MAX);
     let prop = 0;
-    if (isOn && numVel > 1) {
-      prop = Math.max(0, Math.min(1, (activeVel - 1) / (numVel - 1)));
+    if (isOn) {
+      if (numVel > 1) {
+        prop = Math.max(0, Math.min(1, (activeVel - 1) / (numVel - 1)));
+      } else {
+        prop = 1;
+      }
     }
     const actDeg = prop * MAX;
     const actArc = actDeg > 0 ? arc(0, 0, R, 0, actDeg) : "";
@@ -561,7 +657,9 @@ class FanpyCard extends HTMLElement {
     const hasLight = config.has_light !== false;
     const hasTemp = hasLight && config.has_light_temperature !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
+    const hasRing = config.has_ring !== false;
     const hasTimer = config.has_timer !== false;
+    const numTimers = this._numTimers();
 
     return `
       <div class="fan-card ${isOn ? "" : "power-off"}">
@@ -576,20 +674,25 @@ class FanpyCard extends HTMLElement {
           </button>
         </div>
 
+        ${hasRing ? `
         <div class="ring-section">
           <div class="speed-ring" data-cmd="ring">
             ${this._buildRingSVG(numVel, Math.max(1, Math.min(activeVel || 1, numVel)), isOn)}
           </div>
-          <div class="speed-status">${isOn ? (showSpeed ? `${t(this._hass, "velocidad")} <span class="on">${vel}/${numVel}</span>` : "") : t(this._hass, "off")}</div>
+          <div class="speed-status">${isOn ? (showSpeed ? `${t(this._hass, "velocidad")} <span class="on">${vel}/${numVel}</span>` : `<span class="on">${t(this._hass, "on")}</span>`) : t(this._hass, "off")}</div>
         </div>
+        ` : ""}
         ${showSpeed ? `
         <div class="section-divider"></div>
+        <div class="row-label">${t(this._hass, "velocidad")}</div>
         <div class="btn-row">
-          ${Array.from({ length: numVel }, (_, i) => `
-            <button class="ctrl${activeVel === i + 1 && isOn ? " luz-active" : ""}" data-cmd="vel" data-val="${i + 1}">
-              <span class="lbl">${i + 1}</span>
-            </button>
-          `).join("")}
+          ${Array.from({ length: numVel }, (_, i) => {
+            const n = i + 1;
+            const sel = activeVel === n;
+            return `<button class="ctrl${sel ? " speed-selected" : ""}${sel && isOn ? " speed-active" : ""}" data-cmd="vel" data-val="${n}">
+              <span class="lbl">${n}</span>
+            </button>`;
+          }).join("")}
         </div>
         ` : ""}
 
@@ -631,13 +734,15 @@ class FanpyCard extends HTMLElement {
         </div>
         ` : ""}
 
-        ${hasTimer ? `
+        ${hasTimer && numTimers > 0 ? `
         <div class="timer-section">
           <div class="row-label">${t(this._hass, "timer")}</div>
           <div class="timer-row">
-            <button class="timer-btn" data-cmd="timer" data-val="1">${config.timer1_label || "1h"}</button>
-            <button class="timer-btn" data-cmd="timer" data-val="2">${config.timer2_label || "2h"}</button>
-            <button class="timer-btn" data-cmd="timer" data-val="3">${config.timer3_label || "4h"}</button>
+            ${Array.from({ length: numTimers }, (_, i) => {
+              const n = i + 1;
+              const defaultLabels = { 1: "1h", 2: "2h", 3: "4h" };
+              return `<button class="timer-btn${this._timerRunning(n) ? " luz-active" : ""}" data-cmd="timer" data-val="${n}">${config[`timer${n}_label`] || defaultLabels[n] || `${n}h`}</button>`;
+            }).join("")}
           </div>
         </div>
         ` : ""}
@@ -681,6 +786,11 @@ class FanpyCard extends HTMLElement {
   }
 
   _initRingDrag(ring) {
+    const velEntity = this._hass?.states?.[this._mapEntity("speed_state")];
+    const velOptions = velEntity?.attributes?.options;
+    const nv = Array.isArray(velOptions) ? velOptions.length : 6;
+    if (nv <= 1) return;
+
     const toRad = (d) => d * Math.PI / 180;
 
     const arc = (cx, cy, r, s, e) => {
@@ -701,9 +811,6 @@ class FanpyCard extends HTMLElement {
       angle -= 135;
       if (angle < 0) angle += 360;
       angle = Math.min(270, Math.max(0, angle));
-      const velEntity = this._hass?.states?.[this._mapEntity("speed_state")];
-      const velOptions = velEntity?.attributes?.options;
-      const nv = Array.isArray(velOptions) ? velOptions.length : 6;
       const seg = Math.round(angle / 270 * (nv - 1)) + 1;
       return Math.max(1, Math.min(nv, seg));
     };

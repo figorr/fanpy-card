@@ -37,6 +37,7 @@
   "has_light": "Tiene luz",
   "has_light_temperature": "Temperatura de color",
   "has_light_intensity": "Intensidad de luz",
+  "has_ring": "Anillo velocidad",
   "mode": "Modo",
   "mode_fanpy_remote": "Fanpy Remoto (Broadlink RF)",
   "mode_fanpy_direct": "Fanpy Directo (switch.* / light.*)",
