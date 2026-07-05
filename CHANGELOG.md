@@ -1,3 +1,10 @@
+## [2.0.3](https://github.com/figorr/fanpy-card/compare/v2.0.2...v2.0.3) (2026-07-05)
+
+
+### Bug Fixes
+
+* fix visual ring speed 1 ([a2c58e2](https://github.com/figorr/fanpy-card/commit/a2c58e275ba516b501f24e7b0d22cfb3dc39fd96))
+
 ## [2.0.2](https://github.com/figorr/fanpy-card/compare/v2.0.1...v2.0.2) (2026-07-05)
 
 
