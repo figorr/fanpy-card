@@ -564,7 +564,7 @@ class FanpyCard extends HTMLElement {
     let prop = 0;
     if (isOn) {
       if (numVel > 1) {
-        prop = Math.max(0, Math.min(1, (activeVel - 1) / (numVel - 1)));
+        prop = Math.max(0, Math.min(1, activeVel / numVel));
       } else {
         prop = 1;
       }
