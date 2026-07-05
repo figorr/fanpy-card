@@ -1,3 +1,11 @@
+## [2.0.2](https://github.com/figorr/fanpy-card/compare/v2.0.1...v2.0.2) (2026-07-05)
+
+
+### Bug Fixes
+
+* include animation setup disable option ([c471463](https://github.com/figorr/fanpy-card/commit/c471463e2957a881334f901dd1aa61c636eb83ff))
+* update README ([22cc200](https://github.com/figorr/fanpy-card/commit/22cc2007db2cfde595ec5a097d2276be968ee306))
+
 ## [2.0.1](https://github.com/figorr/fanpy-card/compare/v2.0.0...v2.0.1) (2026-07-04)
 
 
