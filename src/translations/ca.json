@@ -38,6 +38,7 @@
   "has_light_temperature": "Temperatura de color",
   "has_light_intensity": "Intensitat de llum",
   "has_ring": "Anell velocitat",
+  "has_animation": "Animació anell",
   "mode": "Mode",
   "mode_fanpy_remote": "Fanpy Remot (Broadlink RF)",
   "mode_fanpy_direct": "Fanpy Directe (switch.* / light.*)",

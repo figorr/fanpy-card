@@ -547,7 +547,7 @@ class FanpyCard extends HTMLElement {
       .replace(/^_|_$/g, "");
   }
 
-  _buildRingSVG(numVel, activeVel, isOn) {
+  _buildRingSVG(numVel, activeVel, isOn, hasAnim) {
     const CX = 160, CY = 160, R = 145, SW = 24;
     const MAX = 270, ROT = 135;
     const toRad = (d) => d * Math.PI / 180;
@@ -593,7 +593,7 @@ class FanpyCard extends HTMLElement {
         <path d="${actArc || "M 0 0"}" class="arc-active${isOn ? "" : " arc-idle"}" stroke-width="${SW}" fill="none"/>
       </g>
       <circle cx="${dx}" cy="${dy}" r="${dotR}" class="arc-dot${isOn ? "" : " arc-idle"}"/>
-      <g class="center-blades${isOn ? " spin" : ""}" style="--fc-spin-duration: ${spinDur}s">
+      <g class="center-blades${isOn && hasAnim ? " spin" : ""}" style="--fc-spin-duration: ${spinDur}s">
         <path d="${blade}" fill="url(#fc-blade)" opacity="${isOn ? "0.7" : "0.2"}"/>
         <path d="${blade}" fill="url(#fc-blade)" opacity="${isOn ? "0.7" : "0.2"}" transform="rotate(120 160 160)"/>
         <path d="${blade}" fill="url(#fc-blade)" opacity="${isOn ? "0.7" : "0.2"}" transform="rotate(240 160 160)"/>
@@ -658,6 +658,7 @@ class FanpyCard extends HTMLElement {
     const hasTemp = hasLight && config.has_light_temperature !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
     const hasRing = config.has_ring !== false;
+    const hasAnim = config.has_animation !== false;
     const hasTimer = config.has_timer !== false;
     const numTimers = this._numTimers();
 
@@ -677,7 +678,7 @@ class FanpyCard extends HTMLElement {
         ${hasRing ? `
         <div class="ring-section">
           <div class="speed-ring" data-cmd="ring">
-            ${this._buildRingSVG(numVel, Math.max(1, Math.min(activeVel || 1, numVel)), isOn)}
+            ${this._buildRingSVG(numVel, Math.max(1, Math.min(activeVel || 1, numVel)), isOn, hasAnim)}
           </div>
           <div class="speed-status">${isOn ? (showSpeed ? `${t(this._hass, "velocidad")} <span class="on">${vel}/${numVel}</span>` : `<span class="on">${t(this._hass, "on")}</span>`) : t(this._hass, "off")}</div>
         </div>
