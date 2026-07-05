@@ -135,6 +135,8 @@ timer3_entity: timer.ventilador_bodega_timer_3
 timer3_label: "4h"
 ```
 
+![Helpers Mode Editor](images/fanpy_card_editor_helpers.png)
+
 #### Fanpy Direct Mode
 
 ```yaml
@@ -154,6 +156,8 @@ timer1_label: "1h"
 timer2_entity: timer.ventilador_bodega_timer_2
 timer2_label: "2h"
 ```
+
+![Helpers Mode Editor](images/fanpy_card_editor_direct.png)
 
 #### Helpers Mode
 
@@ -197,6 +201,7 @@ has_light_intensity: false
 | `has_light_temperature` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide color temperature buttons |
 | `has_light_intensity` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide brightness buttons |
 | `has_ring` | boolean | `true` | all | Show/hide the SVG speed ring and status text. When disabled, only the speed number buttons are shown |
+| `has_animation` | boolean | `true` | all | Animate the fan blades inside the ring. Disabled automatically when `has_ring` is off |
 | `power_on_script` | string | — | fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
 | `power_off_script` | string | — | fanpy_remote, helpers | Override: power OFF script (default: `script.{prefix}_power_off`) |
 | `luz_on_script` | string | — | fanpy_remote, helpers | Override: light ON script (default: `script.{prefix}_luz_on`) |
