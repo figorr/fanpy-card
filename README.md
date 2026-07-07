@@ -21,8 +21,8 @@ The card evolved to support multiple setups:
 
 - **Helpers mode** — the original design using `input_boolean`, `input_select`, `binary_sensor` entities + Broadlink RF scripts
 - **Direct mode** — for Shelly or native `switch.*` / `light.*` entities, no scripts needed for power/light
-- **Fanpy Remote** — works with the [Fanpy integration](https://github.com/figorr/fanpy) (auto-creates entities + Broadlink scripts)
-- **Fanpy Direct** — works with the Fanpy integration using your existing `switch.*` / `light.*` + Fanpy speed control
+- **Fanpy Remote** — works with the [Fanpy integration](https://github.com/figorr/fanpy) v3.0.0+ (auto-creates entities + Broadlink scripts)
+- **Fanpy Direct** — works with the Fanpy integration v3.0.0+ using your existing `switch.*` / `light.*` + Fanpy speed control
 
 ## Features
 
@@ -33,7 +33,7 @@ The card evolved to support multiple setups:
 - ✅ **Speed buttons** synchronized with the ring — tap for quick speed selection
 - ✅ Spinning fan animation with speed-dependent rotation
 - ✅ **Timer section** — up to 3 configurable timer buttons with editable labels. Uses native `timer.start`/`timer.cancel` services. Button count dynamically read from `select.fanpy_<prefix>_num_timers` (set via the Fanpy integration config flow).
-- ✅ **Rollback** on failed commands — ring returns to previous position if the script fails
+- ✅ **Rollback** on failed commands — ring returns to previous position if the service/script call fails
 - ✅ **Entity validation** before calling services — rejects non-existent entities immediately
 - ✅ Visual editor with mode selector, area dropdown, fan number, toggle switches, and timer labels
 - ✅ Multi-language support (en, es, ca)
@@ -48,10 +48,10 @@ The card evolved to support multiple setups:
 |------|-------|-------|-------|----------|
 | **Helpers** | Scripts → Broadlink RF | Scripts → Broadlink RF | Scripts → Broadlink RF | Manual setup with input_* helpers + RF scripts |
 | **Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Shelly / native switch.* / light.* + RF speed |
-| **Fanpy Remote** | Scripts → Broadlink RF | Scripts → Broadlink RF | Scripts → Broadlink RF | Fanpy integration + Broadlink RF |
+| **Fanpy Remote** | `fan.turn_on/off` (via integration) | `light.turn_on/off` (via integration) | `fan.set_percentage` (via integration) | Fanpy integration + Broadlink RF |
 | **Fanpy Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Fanpy integration + Shelly switch.* / light.* |
 
-Speed always requires scripts (even in Direct modes) because changing fan speed typically requires sending RF commands.
+Speed always requires RF scripts (even in Direct modes) because changing fan speed typically requires sending RF commands. In **Fanpy Remote** mode, the card calls `fan.set_percentage`, which internally triggers the RF script. In **Fanpy Direct** mode, the card calls speed scripts directly — matching the behavior of `helpers` and `direct` modes.
 
 ## Installation
 
@@ -228,11 +228,11 @@ If no override is specified, the card auto-generates names from the prefix:
 |--------|------------------|
 | Power state (helpers) | `input_boolean.{prefix}_power` |
 | Light state (helpers) | `input_boolean.{prefix}_luz` |
-| Power state (fanpy_remote) | `switch.fanpy_{prefix}_power` |
-| Light state (fanpy_remote) | `switch.fanpy_{prefix}_luz` |
-| Speed state | `{domain}.{prefix}_velocidad` |
-| Power sensor | `binary_sensor.{fanpy_prefix}{prefix}_power` |
-| Light sensor | `binary_sensor.{fanpy_prefix}{prefix}_luz` |
+| Fan entity (fanpy_remote) | `fan.fanpy_{prefix}` |
+| Light entity (fanpy_remote) | `light.fanpy_{prefix}_luz` |
+| Speed selector | `{domain}.{fanpy_prefix}{prefix}_velocidad` |
+| Power sensor (helpers) | `binary_sensor.{prefix}_power` |
+| Light sensor (helpers) | `binary_sensor.{prefix}_luz` |
 | Power ON | `script.{prefix}_power_on` |
 | Power OFF | `script.{prefix}_power_off` |
 | Light ON | `script.{prefix}_luz_on` |
@@ -244,7 +244,8 @@ If no override is specified, the card auto-generates names from the prefix:
 | Speed 1–N | `script.{prefix}_velocidad_{1-N}` |
 
 Where `{fanpy_prefix}` is `fanpy_` for fanpy modes and empty for helpers mode.  
-Where `{domain}` is `input_select` (helpers) or `select` (fanpy modes).
+Where `{domain}` is `input_select` (helpers) or `select` (fanpy modes).  
+In **Fanpy Remote**, `binary_sensor` entities are not created — the card reads `fan.fanpy_{prefix}` and `light.fanpy_{prefix}_luz` directly for state. In **Fanpy Direct**, the card reads `switch.*` and `light.*` specified via `entity_fan` / `entity_light`.
 
 ### Helpers Mode — Required Entities
 

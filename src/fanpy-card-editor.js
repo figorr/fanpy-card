@@ -10,15 +10,22 @@ class FanpyCardEditor extends HTMLElement {
 
   setConfig(config) {
     this._config = JSON.parse(JSON.stringify(config || {}));
-    if (this._hass) this._render();
+    if (this._hass && !this._suppressRender) {
+      this._render();
+    }
+    this._suppressRender = false;
   }
 
   set hass(hass) {
     this._hass = hass;
-    this._render();
+    if (!this._rendered) {
+      this._rendered = true;
+      this._render();
+    }
   }
 
   _dispatch() {
+    this._suppressRender = true;
     this.dispatchEvent(new CustomEvent("config-changed", {
       detail: { config: this._config },
       bubbles: true, composed: true,
@@ -141,8 +148,6 @@ class FanpyCardEditor extends HTMLElement {
     const hasInt = isEntityMode ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
     const hasRing = c.has_ring !== false;
     const hasAnim = c.has_animation !== false;
-    const fanEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("switch.")).sort();
-    const lightEntities = Object.keys(hass.states || {}).filter(e => e.startsWith("light.")).sort();
     const timerEntities = Object.keys(hass.states || {})
       .filter(e => e.startsWith("timer."))
       .filter(e => !prefix || e.includes(prefix))
@@ -259,23 +264,11 @@ class FanpyCardEditor extends HTMLElement {
         <div class="field-row">
           <div>
             <span class="field-label">${L("entity_fan")}</span>
-            <select id="entity-fan">
-              <option value="">— ${L("entity_fan")} —</option>
-              ${fanEntities.map(e => {
-                const friendly = hass.states?.[e]?.attributes?.friendly_name || e;
-                return `<option value="${e}" ${e === (c.entity_fan || "") ? "selected" : ""}>${friendly}</option>`;
-              }).join("")}
-            </select>
+            <ha-entity-picker id="entity-fan" value="${c.entity_fan || ''}"></ha-entity-picker>
           </div>
           <div>
             <span class="field-label">${L("entity_light")}</span>
-            <select id="entity-light">
-              <option value="">— ${L("entity_light")} —</option>
-              ${lightEntities.map(e => {
-                const friendly = hass.states?.[e]?.attributes?.friendly_name || e;
-                return `<option value="${e}" ${e === (c.entity_light || "") ? "selected" : ""}>${friendly}</option>`;
-              }).join("")}
-            </select>
+            <ha-entity-picker id="entity-light" value="${c.entity_light || ''}"></ha-entity-picker>
           </div>
         </div>
       </div>
@@ -460,14 +453,18 @@ class FanpyCardEditor extends HTMLElement {
     }
 
     if (entityFan) {
-      entityFan.addEventListener("change", () => {
-        this._config.entity_fan = entityFan.value || undefined;
+      entityFan.hass = hass;
+      entityFan.includeDomains = ["switch"];
+      entityFan.addEventListener("value-changed", (e) => {
+        this._config.entity_fan = e.detail.value || undefined;
         this._dispatch();
       });
     }
     if (entityLight) {
-      entityLight.addEventListener("change", () => {
-        this._config.entity_light = entityLight.value || undefined;
+      entityLight.hass = hass;
+      entityLight.includeDomains = ["light"];
+      entityLight.addEventListener("value-changed", (e) => {
+        this._config.entity_light = e.detail.value || undefined;
         this._dispatch();
       });
     }

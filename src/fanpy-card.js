@@ -410,19 +410,19 @@ class FanpyCard extends HTMLElement {
     switch (type) {
       case "power_state":
         if (isDirect) return this._config.entity_fan;
-        return isFanpy ? `switch.fanpy_${p}_power` : `input_boolean.${p}_power`;
+        return isFanpy ? `fan.fanpy_${p}` : `input_boolean.${p}_power`;
       case "light_state":
         if (isDirect) return this._config.entity_light;
-        return isFanpy ? `switch.fanpy_${p}_luz` : `input_boolean.${p}_luz`;
+        return isFanpy ? `light.fanpy_${p}_luz` : `input_boolean.${p}_luz`;
       case "speed_state":
         if (isFanpy) return `select.fanpy_${speedPrefix}_velocidad`;
         return `input_select.${speedPrefix}_velocidad`;
       case "power_moreinfo":
         if (isDirect) return this._config.entity_fan;
-        return isFanpy ? `binary_sensor.fanpy_${p}_power` : `binary_sensor.${p}_power`;
+        return isFanpy ? `fan.fanpy_${p}` : `binary_sensor.${p}_power`;
       case "light_moreinfo":
         if (isDirect) return this._config.entity_light;
-        return isFanpy ? `binary_sensor.fanpy_${p}_luz` : `binary_sensor.${p}_luz`;
+        return isFanpy ? `light.fanpy_${p}_luz` : `binary_sensor.${p}_luz`;
     }
     return null;
   }
@@ -430,6 +430,7 @@ class FanpyCard extends HTMLElement {
   _execute(cmd, data) {
     const mode = this._mode();
     const isDirect = mode === "direct" || mode === "fanpy_direct";
+    const isFanpy = mode.startsWith("fanpy");
     const config = this._config;
     let p;
 
@@ -437,24 +438,28 @@ class FanpyCard extends HTMLElement {
       return config[key] || `script.${config.prefix || `ventilador_${this._slugify(config.name)}`}_${fallback}`;
     };
 
+    const fanEntityId = () => `fan.fanpy_${config.prefix}`;
+    const lightEntityId = () => `light.fanpy_${config.prefix}_luz`;
+
     switch (cmd) {
       case "power": {
         const on = isDirect
           ? this._state(config.entity_fan) === "on"
           : this._state(this._mapEntity("power_state")) === "on";
-        if (isDirect) {
-          p = this._callService("switch", on ? "turn_off" : "turn_on", { entity_id: config.entity_fan });
-        } else {
-          p = this._call(on ? scriptFor("power_off_script", "power_off") : scriptFor("power_on_script", "power_on"));
-        }
         if (on && config.has_timer !== false) {
           for (let i = 1; i <= 3; i++) {
             const te = this._timerEntity(i);
             if (this._hass?.states?.[te]?.state === "active") {
               this._timerCancelPending.add(te);
-              this._callService("timer", "cancel", { entity_id: te });
             }
           }
+        }
+        if (isDirect) {
+          p = this._callService("switch", on ? "turn_off" : "turn_on", { entity_id: config.entity_fan });
+        } else if (isFanpy) {
+          p = this._callService("fan", on ? "turn_off" : "turn_on", { entity_id: fanEntityId() });
+        } else {
+          p = this._call(on ? scriptFor("power_off_script", "power_off") : scriptFor("power_on_script", "power_on"));
         }
         break;
       }
@@ -462,6 +467,9 @@ class FanpyCard extends HTMLElement {
         if (isDirect) {
           const on = this._state(config.entity_light) === "on";
           p = this._callService("light", on ? "turn_off" : "turn_on", { entity_id: config.entity_light });
+        } else if (isFanpy) {
+          const on = this._state(this._mapEntity("light_state")) === "on";
+          p = this._callService("light", on ? "turn_off" : "turn_on", { entity_id: lightEntityId() });
         } else {
           const on = this._state(this._mapEntity("light_state")) === "on";
           p = this._call(on ? scriptFor("luz_off_script", "luz_off") : scriptFor("luz_on_script", "luz_on"));
@@ -488,9 +496,18 @@ class FanpyCard extends HTMLElement {
           ? this._callService("light", "turn_on", { entity_id: config.entity_light, brightness_step_pct: 25 })
           : this._call(scriptFor("intensidad_alta_script", "intensidad_alta"));
         break;
-      case "vel":
-        p = this._call(scriptFor(`velocidad_${data}_script`, `velocidad_${data}`));
+      case "vel": {
+        if (isFanpy && !isDirect) {
+          const velEntity = this._hass?.states?.[this._mapEntity("speed_state")];
+          const velOptions = velEntity?.attributes?.options;
+          const nv = Array.isArray(velOptions) ? velOptions.length : 6;
+          const pct = Math.round(parseInt(data, 10) / nv * 100);
+          p = this._callService("fan", "set_percentage", { entity_id: fanEntityId(), percentage: pct });
+        } else {
+          p = this._call(scriptFor(`velocidad_${data}_script`, `velocidad_${data}`));
+        }
         break;
+      }
       case "timer": {
         const pow = this._state(this._mapEntity("power_state"));
         if (pow !== "on") return;
@@ -526,8 +543,11 @@ class FanpyCard extends HTMLElement {
   _autoPowerOff() {
     const config = this._config;
     const mode = this._mode();
+    const isFanpy = mode.startsWith("fanpy");
     if (mode === "direct" || mode === "fanpy_direct") {
       this._callService("switch", "turn_off", { entity_id: config.entity_fan });
+    } else if (isFanpy) {
+      this._callService("fan", "turn_off", { entity_id: `fan.fanpy_${config.prefix}` });
     } else {
       const s = (key, fallback) => config[key] || `script.${config.prefix || `ventilador_${this._slugify(config.name)}`}_${fallback}`;
       this._call(s("power_off_script", "power_off"));
@@ -891,5 +911,5 @@ window.customCards.push({
   type: "fanpy-card",
   name: "Fanpy Card",
   description: "Fanpy card to control ceiling fans with light and speed",
-  preview: false,
+  preview: true,
 });
