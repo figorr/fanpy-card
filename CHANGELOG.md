@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/figorr/fanpy-card/compare/v2.0.3...v3.0.0) (2026-07-07)
+
+
+### Features
+
+* New Fanpy Card structure for Fanpy v3.0.0 ([0e41c01](https://github.com/figorr/fanpy-card/commit/0e41c01538b262990e1ec2bccc0367b20a737ed4))
+
+
+### BREAKING CHANGES
+
+* Requires at least Fanpy v3.0.0
+
 ## [2.0.3](https://github.com/figorr/fanpy-card/compare/v2.0.2...v2.0.3) (2026-07-05)
 
 
