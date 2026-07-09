@@ -48,12 +48,11 @@ class FanpyCardEditor extends HTMLElement {
   }
 
   _detectFanpyConfigs(hass) {
-    const areaFans = {}; // {slug: number[]}
+    const configs = {};
     Object.keys(hass.states || {}).forEach(entityId => {
       const m = entityId.match(/^select\.fanpy_ventilador_(.+)_velocidad$/);
       if (!m) return;
       let raw = m[1];
-      // fan number suffix convention: ventilador_{slug}_{N}
       const parts = raw.split('_');
       const last = parseInt(parts[parts.length - 1], 10);
       let slug, fanNum;
@@ -64,10 +63,16 @@ class FanpyCardEditor extends HTMLElement {
         slug = raw;
         fanNum = 1;
       }
-      if (!areaFans[slug]) areaFans[slug] = [];
-      if (!areaFans[slug].includes(fanNum)) areaFans[slug].push(fanNum);
+      if (!configs[slug]) configs[slug] = { numbers: [], byNum: {} };
+      if (!configs[slug].numbers.includes(fanNum)) configs[slug].numbers.push(fanNum);
+      const attrs = hass.states[entityId]?.attributes || {};
+      configs[slug].byNum[fanNum] = {
+        entity_fan: attrs.entity_fan || "",
+        entity_light: attrs.entity_light || "",
+        fanpy_mode: attrs.fanpy_mode || "remote",
+      };
     });
-    return areaFans;
+    return configs;
   }
 
   _numTimers() {
@@ -140,12 +145,32 @@ class FanpyCardEditor extends HTMLElement {
 
     // Detect fanpy configurations for area filtering
     const fanpyConfigs = this._detectFanpyConfigs(hass);
-    const fanpyAreas = areas.filter(([, a]) => fanpyConfigs[this._slugifyArea(a)]);
-    const currentFanpyFans = (currentId && fanpyConfigs[this._slugifyArea(hass.areas[currentId])]) || [1];
+    const fanpyAreas = areas.filter(([, a]) => {
+      const cfg = fanpyConfigs[this._slugifyArea(a)];
+      if (!cfg) return false;
+      return Object.values(cfg.byNum).some(fc => fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct"));
+    });
+    const fanpySlug = currentId ? this._slugifyArea(hass.areas[currentId]) : null;
+    const currentFanpyData = (fanpySlug && fanpyConfigs[fanpySlug]) || null;
+    const currentFanpyFans = currentFanpyData
+      ? currentFanpyData.numbers.filter(n => {
+          const fc = currentFanpyData.byNum[n];
+          return fc && fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct");
+        })
+      : [1];
 
-    const hasLight = c.has_light !== false;
-    const hasTemp = isEntityMode ? (c.has_light_temperature === true) : (c.has_light_temperature !== false);
-    const hasInt = isEntityMode ? (c.has_light_intensity === true) : (c.has_light_intensity !== false);
+    // Auto-detect entity_fan/entity_light from config entry for fanpy_direct
+    const directEntityFan = (isFanpyDirect && currentFanpyData)
+      ? (currentFanpyData.byNum[prefixFan]?.entity_fan || c.entity_fan || "")
+      : (c.entity_fan || "");
+    const directEntityLight = (isFanpyDirect && currentFanpyData)
+      ? (currentFanpyData.byNum[prefixFan]?.entity_light || c.entity_light || "")
+      : (c.entity_light || "");
+    const canHaveLight = !isFanpyDirect || !!directEntityLight;
+
+    const hasLight = canHaveLight ? (c.has_light !== false) : false;
+    const hasTemp = isEntityMode ? (c.has_light_temperature === true && hasLight) : (c.has_light_temperature !== false);
+    const hasInt = isEntityMode ? (c.has_light_intensity === true && hasLight) : (c.has_light_intensity !== false);
     const hasRing = c.has_ring !== false;
     const hasAnim = c.has_animation !== false;
     const timerEntities = Object.keys(hass.states || {})
@@ -260,7 +285,6 @@ class FanpyCardEditor extends HTMLElement {
             </select>
           </div>
         </div>
-        ` : ""}
         <div class="field-row">
           <div>
             <span class="field-label">${L("entity_fan")}</span>
@@ -271,6 +295,12 @@ class FanpyCardEditor extends HTMLElement {
             <ha-entity-picker id="entity-light" value="${c.entity_light || ''}"></ha-entity-picker>
           </div>
         </div>
+        ` : ""}
+        ${isFanpyDirect ? `
+        <div style="padding:8px 0;font-size:12px;color:var(--secondary-text-color,#727272);font-style:italic;">
+          Entities auto-detected from the Fanpy integration configuration.
+        </div>
+        ` : ""}
       </div>
 
       <div class="section-title">${L("basic")}</div>
@@ -296,11 +326,11 @@ class FanpyCardEditor extends HTMLElement {
 
           <div class="toggle-row">
             <label class="toggle-switch">
-              <input type="checkbox" id="tog-light" ${hasLight ? "checked" : ""}>
+              <input type="checkbox" id="tog-light" ${hasLight ? "checked" : ""} ${!canHaveLight ? "disabled" : ""}>
               <span class="toggle-track"></span>
               <span class="toggle-thumb"></span>
             </label>
-            <label for="tog-light">${L("has_light")}</label>
+            <label for="tog-light" class="${!canHaveLight ? "disabled" : ""}">${L("has_light")}</label>
           </div>
 
           <div class="toggle-row indent">
@@ -339,8 +369,8 @@ class FanpyCardEditor extends HTMLElement {
       <div class="summary">
         <div><strong>${L("name")}:</strong> <span id="preview-name">${c.name || "—"}</span></div>
         ${!isDirect ? `<div><strong>${L("prefix")}:</strong> <span id="preview-prefix">${prefix || "—"}</span></div>` : ""}
-        ${isEntityMode ? `<div><strong>${L("entity_fan")}:</strong> <span>${c.entity_fan || "—"}</span></div>
-        <div><strong>${L("entity_light")}:</strong> <span>${c.entity_light || "—"}</span></div>` : ""}
+        ${isEntityMode ? `<div><strong>${L("entity_fan")}:</strong> <span>${directEntityFan || "—"}</span></div>
+        <div><strong>${L("entity_light")}:</strong> <span>${directEntityLight || "—"}</span></div>` : ""}
         <div class="hint">${L("edit_code_hint")}</div>
       </div>
     </div>`;
@@ -359,6 +389,20 @@ class FanpyCardEditor extends HTMLElement {
         if (newMode === "direct") {
           delete this._config.name;
           delete this._config.prefix;
+        } else {
+          // Auto-populate entity_fan/entity_light from current prefix if available
+          const pSlug = prefixSlug;
+          const pFan = prefixFan;
+          if (pSlug) {
+            const fc = fanpyConfigs[pSlug]?.byNum?.[pFan];
+            if (fc) {
+              if (fc.entity_fan) this._config.entity_fan = fc.entity_fan;
+              if (fc.entity_light) {
+                this._config.entity_light = fc.entity_light;
+                this._config.has_light = true;
+              }
+            }
+          }
         }
         fanpyFields.style.display = newMode === "fanpy_direct" ? "" : "none";
         helpersFields.style.display = "none";
@@ -400,11 +444,27 @@ class FanpyCardEditor extends HTMLElement {
       this._config.name = area.name.toUpperCase();
       this._config.prefix = newPrefix;
       this._config.fan_number = n;
+      // Auto-populate entity_fan/entity_light for fanpy_direct
+      if (isFanpyDirect) {
+        const fc = fanpyConfigs[slug]?.byNum?.[n];
+        if (fc) {
+          if (fc.entity_fan) this._config.entity_fan = fc.entity_fan;
+          else delete this._config.entity_fan;
+          if (fc.entity_light) {
+            this._config.entity_light = fc.entity_light;
+            if (this._config.has_light === undefined || this._config.has_light === false) {
+              this._config.has_light = true;
+            }
+          } else {
+            delete this._config.entity_light;
+            this._config.has_light = false;
+          }
+          delete this._config.has_light_temperature;
+          delete this._config.has_light_intensity;
+        }
+      }
       this._dispatch();
-      const previewName = root.getElementById("preview-name");
-      if (previewName) previewName.textContent = area.name.toUpperCase();
-      const previewPrefix = root.getElementById("preview-prefix");
-      if (previewPrefix) previewPrefix.textContent = newPrefix;
+      this._render();
     };
 
     if (fanpyAreaSelect) {
@@ -429,10 +489,7 @@ class FanpyCardEditor extends HTMLElement {
         this._config.name = area.name.toUpperCase();
         this._config.prefix = `ventilador_${slug}`;
         this._dispatch();
-        const previewName = root.getElementById("preview-name");
-        if (previewName) previewName.textContent = area.name.toUpperCase();
-        const previewPrefix = root.getElementById("preview-prefix");
-        if (previewPrefix) previewPrefix.textContent = `ventilador_${slug}`;
+        this._render();
       });
     }
 
@@ -447,8 +504,7 @@ class FanpyCardEditor extends HTMLElement {
           delete this._config.prefix;
         }
         this._dispatch();
-        const previewName = root.getElementById("preview-name");
-        if (previewName) previewName.textContent = val || "—";
+        this._render();
       });
     }
 
