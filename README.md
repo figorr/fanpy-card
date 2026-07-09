@@ -617,6 +617,29 @@ The card renders a compact control panel with an SVG speed ring. Example layout 
 - Active speed is highlighted with the theme accent color.
 - Light button shows yellow when light is on.
 - Timer section is optional (`has_timer: false` / `num_timers: 0`) and calls native `timer.start`/`timer.cancel` on the configured timer entities. Each button label is configurable (`timer1_label` etc.).
+
+### Timer Expiry Behaviour
+
+When a timer finishes naturally (countdown reaches zero), the card automatically turns off the fan. This works differently depending on the mode:
+
+| Mode | Handled by | Notes |
+|------|------------|-------|
+| **Fanpy Remote** / **Fanpy Direct** | Fanpy integration (backend) | Automatic — the integration listens for HA's `timer.finished` event and turns off the fan/switch. Works even if the card is not visible or the app is in the background. |
+| **Helpers** / **Direct** | Card (frontend only) | The card detects the timer transition `active → idle` and calls the power-off action. Only works when the card is actively rendered and receiving state updates (card visible and app in foreground). |
+
+> For **Helpers** and **Direct** modes, it is recommended to create an HA automation so timer expiry works reliably regardless of card visibility:
+> ```yaml
+> automation:
+>   - alias: "Apagar ventilador cuando timer finalice"
+>     trigger:
+>       - platform: event
+>         event_type: timer.finished
+>         event_data:
+>           entity_id: "timer.ventilador_salon_timer_1"
+>     action:
+>       - action: script.ventilador_salon_power_off
+> ```
+> Create one automation per timer entity. This is not needed for Fanpy modes — the integration handles it automatically.
 - Sections can be hidden via toggle switches in the editor or YAML options.
 
   - **Card example**
