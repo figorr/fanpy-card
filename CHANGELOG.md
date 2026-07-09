@@ -1,3 +1,10 @@
+## [3.0.1](https://github.com/figorr/fanpy-card/compare/v3.0.0...v3.0.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* improve fanpy direct mode entities detection ([4133402](https://github.com/figorr/fanpy-card/commit/4133402aad47f81eb887c8e9d5d2303bdf4d6b68))
+
 # [3.0.0](https://github.com/figorr/fanpy-card/compare/v2.0.3...v3.0.0) (2026-07-07)
 
 
