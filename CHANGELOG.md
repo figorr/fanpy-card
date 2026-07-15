@@ -1,3 +1,10 @@
+## [3.0.2](https://github.com/figorr/fanpy-card/compare/v3.0.1...v3.0.2) (2026-07-15)
+
+
+### Bug Fixes
+
+* added new fanpy pro setup ([5586026](https://github.com/figorr/fanpy-card/commit/55860263d02852f0e7c9048aa3f1de26dd1f8441))
+
 ## [3.0.1](https://github.com/figorr/fanpy-card/compare/v3.0.0...v3.0.1) (2026-07-09)
 
 
