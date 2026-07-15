@@ -387,13 +387,20 @@ class FanpyCard extends HTMLElement {
   }
 
   _mode() {
-    return this._config.mode || "fanpy_remote";
+    return this._config.mode || "fanpypro_remote";
+  }
+
+  _entityPrefix() {
+    const mode = this._mode();
+    if (mode === "fanpy_remote" || mode === "fanpy_direct") return "fanpy";
+    return "fanpypro";
   }
 
   _numTimers() {
     const config = this._config;
     const pp = config.prefix || `ventilador_${this._slugify(config.name)}`;
-    const entityId = `select.fanpy_${pp}_num_timers`;
+    const ep = this._entityPrefix();
+    const entityId = `select.${ep}_${pp}_num_timers`;
     const state = this._hass?.states?.[entityId]?.state;
     if (state !== undefined) return parseInt(state, 10) || 0;
     if (config.num_timers !== undefined) return parseInt(config.num_timers, 10) || 0;
@@ -405,41 +412,43 @@ class FanpyCard extends HTMLElement {
     const p = this._config.prefix;
     const speedPrefix = p || (this._config.name ? `ventilador_${this._slugify(this._config.name)}` : null);
     const isFanpy = mode.startsWith("fanpy");
-    const isDirect = mode === "direct" || mode === "fanpy_direct";
+    const isDirect = mode === "direct" || mode === "fanpy_direct" || mode === "fanpypro_direct";
+    const ep = this._entityPrefix();
 
     switch (type) {
       case "power_state":
         if (isDirect) return this._config.entity_fan;
-        return isFanpy ? `fan.fanpy_${p}` : `input_boolean.${p}_power`;
+        return isFanpy ? `fan.${ep}_${p}` : `input_boolean.${p}_power`;
       case "light_state":
         if (isDirect) return this._config.entity_light;
-        return isFanpy ? `light.fanpy_${p}_luz` : `input_boolean.${p}_luz`;
+        return isFanpy ? `light.${ep}_${p}_luz` : `input_boolean.${p}_luz`;
       case "speed_state":
-        if (isFanpy) return `select.fanpy_${speedPrefix}_velocidad`;
+        if (isFanpy) return `select.${ep}_${speedPrefix}_velocidad`;
         return `input_select.${speedPrefix}_velocidad`;
       case "power_moreinfo":
         if (isDirect) return this._config.entity_fan;
-        return isFanpy ? `fan.fanpy_${p}` : `binary_sensor.${p}_power`;
+        return isFanpy ? `fan.${ep}_${p}` : `binary_sensor.${p}_power`;
       case "light_moreinfo":
         if (isDirect) return this._config.entity_light;
-        return isFanpy ? `light.fanpy_${p}_luz` : `binary_sensor.${p}_luz`;
+        return isFanpy ? `light.${ep}_${p}_luz` : `binary_sensor.${p}_luz`;
     }
     return null;
   }
 
   _execute(cmd, data) {
     const mode = this._mode();
-    const isDirect = mode === "direct" || mode === "fanpy_direct";
+    const isDirect = mode === "direct" || mode === "fanpy_direct" || mode === "fanpypro_direct";
     const isFanpy = mode.startsWith("fanpy");
     const config = this._config;
+    const ep = this._entityPrefix();
     let p;
 
     const scriptFor = (key, fallback) => {
       return config[key] || `script.${config.prefix || `ventilador_${this._slugify(config.name)}`}_${fallback}`;
     };
 
-    const fanEntityId = () => `fan.fanpy_${config.prefix}`;
-    const lightEntityId = () => `light.fanpy_${config.prefix}_luz`;
+    const fanEntityId = () => `fan.${ep}_${config.prefix}`;
+    const lightEntityId = () => `light.${ep}_${config.prefix}_luz`;
 
     switch (cmd) {
       case "power": {
@@ -544,10 +553,11 @@ class FanpyCard extends HTMLElement {
     const config = this._config;
     const mode = this._mode();
     const isFanpy = mode.startsWith("fanpy");
-    if (mode === "direct" || mode === "fanpy_direct") {
+    const ep = this._entityPrefix();
+    if (mode === "direct" || mode === "fanpy_direct" || mode === "fanpypro_direct") {
       this._callService("switch", "turn_off", { entity_id: config.entity_fan });
     } else if (isFanpy) {
-      this._callService("fan", "turn_off", { entity_id: `fan.fanpy_${config.prefix}` });
+      this._callService("fan", "turn_off", { entity_id: `fan.${ep}_${config.prefix}` });
     } else {
       const s = (key, fallback) => config[key] || `script.${config.prefix || `ventilador_${this._slugify(config.name)}`}_${fallback}`;
       this._call(s("power_off_script", "power_off"));

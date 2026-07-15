@@ -21,18 +21,18 @@ The card evolved to support multiple setups:
 
 - **Helpers mode** — the original design using `input_boolean`, `input_select`, `binary_sensor` entities + Broadlink RF scripts
 - **Direct mode** — for Shelly or native `switch.*` / `light.*` entities, no scripts needed for power/light
-- **Fanpy Remote** — works with the [Fanpy integration](https://github.com/figorr/fanpy) v3.0.0+ (auto-creates entities + Broadlink scripts)
-- **Fanpy Direct** — works with the Fanpy integration v3.0.0+ using your existing `switch.*` / `light.*` + Fanpy speed control
+- **Fanpy** (Remote / Direct) — works with the [Fanpy integration](https://github.com/figorr/fanpy) v3.0.0+ (Broadlink RF)
+- **Fanpy PRO** (Remote / Direct) — works with the [fanpypro integration](https://github.com/figorr/fanpypro) using an ESPHome RF gateway (ESP32 + CC1101) instead of Broadlink
 
 ## Features
 
-- ✅ **Four modes**: Helpers, Direct, Fanpy Remote, Fanpy Direct
+- ✅ **Six modes**: Helpers, Direct, Fanpy Remote, Fanpy Direct, Fanpy PRO Remote, Fanpy PRO Direct
 - ✅ Control fan power (on/off)
 - ✅ Control light (on/off, warm/cold temperature, brightness up/down)
 - ✅ **SVG speed ring** with drag interaction — change speed by sliding on the ring arc
 - ✅ **Speed buttons** synchronized with the ring — tap for quick speed selection
 - ✅ Spinning fan animation with speed-dependent rotation
-- ✅ **Timer section** — up to 3 configurable timer buttons with editable labels. Uses native `timer.start`/`timer.cancel` services. Button count dynamically read from `select.fanpy_<prefix>_num_timers` (set via the Fanpy integration config flow).
+- ✅ **Timer section** — up to 3 configurable timer buttons with editable labels. Uses native `timer.start`/`timer.cancel` services. Button count dynamically read from `select.{fanpy_prefix}<prefix>_num_timers` (e.g., `select.fanpypro_ventilador_salon_num_timers`, set via the integration config flow).
 - ✅ **Rollback** on failed commands — ring returns to previous position if the service/script call fails
 - ✅ **Entity validation** before calling services — rejects non-existent entities immediately
 - ✅ Visual editor with mode selector, area dropdown, fan number, toggle switches, and timer labels
@@ -44,14 +44,16 @@ The card evolved to support multiple setups:
 
 ## Modes Overview
 
-| Mode | Power | Light | Speed | Best for |
-|------|-------|-------|-------|----------|
-| **Helpers** | Scripts → Broadlink RF | Scripts → Broadlink RF | Scripts → Broadlink RF | Manual setup with input_* helpers + RF scripts |
-| **Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Shelly / native switch.* / light.* + RF speed |
-| **Fanpy Remote** | `fan.turn_on/off` (via integration) | `light.turn_on/off` (via integration) | `fan.set_percentage` (via integration) | Fanpy integration + Broadlink RF |
-| **Fanpy Direct** | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Fanpy integration + Shelly switch.* / light.* |
+| Mode | Setup | Power | Light | Speed | RF Method |
+|------|-------|-------|-------|-------|-----------|
+| **Helpers** | Custom | Scripts → RF | Scripts → RF | Scripts → RF | Broadlink |
+| **Direct** | Custom | `switch.turn_on/off` | `light.turn_on/off` | Scripts → RF | Broadlink |
+| **Fanpy Remote** | Fanpy | `fan.turn_on/off` (via integration) | `light.turn_on/off` (via integration) | `fan.set_percentage` (via integration) | Broadlink |
+| **Fanpy Direct** | Fanpy | `switch.turn_on/off` | `light.turn_on/off` | Scripts → Broadlink RF | Broadlink |
+| **Fanpy PRO Remote** | Fanpy PRO | `fan.turn_on/off` (via integration) | `light.turn_on/off` (via integration) | `fan.set_percentage` (via integration) | ESPHome RF Gateway |
+| **Fanpy PRO Direct** | Fanpy PRO | `switch.turn_on/off` | `light.turn_on/off` | Scripts → ESPHome RF | ESPHome RF Gateway |
 
-Speed always requires RF scripts (even in Direct modes) because changing fan speed typically requires sending RF commands. In **Fanpy Remote** mode, the card calls `fan.set_percentage`, which internally triggers the RF script. In **Fanpy Direct** mode, the card calls speed scripts directly — matching the behavior of `helpers` and `direct` modes.
+Speed always requires RF scripts (even in Direct modes) because changing fan speed typically requires sending RF commands. In **Fanpy Remote** and **Fanpy PRO Remote** modes, the card calls `fan.set_percentage`, which internally triggers the RF command. In **Fanpy Direct** and **Fanpy PRO Direct** modes, the card calls speed scripts directly — matching the behavior of `helpers` and `direct` modes.
 
 ## Installation
 
@@ -77,17 +79,28 @@ Speed always requires RF scripts (even in Direct modes) because changing fan spe
 
 ### Visual Editor
 
-The visual editor adapts to the selected mode. The mode selector is at the top of the editor panel.
+The visual editor adapts to the selected setup and mode. At the top of the editor panel there are two dropdowns:
 
-#### Fanpy Modes (Remote / Direct)
+- **Setup**: `Fanpy PRO` / `Fanpy` / `Custom` — determines which integration the card works with
+- **Mode**: shows 2 options filtered by the selected setup
 
-These modes work with the [Fanpy integration](https://github.com/figorr/fanpy). When you select a Fanpy mode, the editor:
+#### Setup: Fanpy PRO
 
-1. Scans your HA entities for existing Fanpy configurations
-2. Shows only areas that have Fanpy entities configured
-3. Lets you select the fan number (if multiple fans exist in the same area)
+Works with the [fanpypro integration](https://github.com/figorr/fanpypro) using an ESPHome RF gateway (ESP32 + CC1101). The editor scans HA entities for existing fanpypro configurations (`select.fanpypro_ventilador_*_velocidad`).
 
-Select the **Area** and **Fan #**, then configure the toggle switches. In **Fanpy Direct** mode, you must also select the **Fan entity** (`switch.*`) and **Light entity** (`light.*`).
+1. Select the **Area** and **Fan #** from the auto-detected configs
+2. In **Fanpy PRO Direct** mode, entities are auto-populated from the config flow
+3. Configure toggle switches (light, temperature, intensity, ring, timer)
+
+#### Setup: Fanpy
+
+Works with the [Fanpy integration](https://github.com/figorr/fanpy) (Broadlink RF). The editor scans HA entities for existing Fanpy configurations (`select.fanpy_ventilador_*_velocidad`).
+
+1. Select the **Area** and **Fan #** from the auto-detected configs
+2. In **Fanpy Direct** mode, you must select **Fan entity** (`switch.*`) and **Light entity** (`light.*`)
+3. Configure toggle switches
+
+When you select a Fanpy setup, the editor auto-detects the correct prefix (`fanpy_` or `fanpypro_`) from the area's entities and sets the mode accordingly.
 
 #### Helpers Mode
 
@@ -136,6 +149,44 @@ timer3_label: "4h"
 ```
 
 ![Helpers Mode Editor](images/fanpy_card_editor_helpers.png)
+
+#### Fanpy PRO Remote Mode
+
+```yaml
+type: custom:fanpy-card
+mode: fanpypro_remote
+name: "SALON"
+prefix: "ventilador_salon"
+fan_number: 1
+has_light: true
+has_light_temperature: true
+has_light_intensity: true
+num_timers: 3
+timer1_entity: timer.ventilador_salon_timer_1
+timer1_label: "1h"
+timer2_entity: timer.ventilador_salon_timer_2
+timer2_label: "2h"
+timer3_entity: timer.ventilador_salon_timer_3
+timer3_label: "4h"
+```
+
+#### Fanpy PRO Direct Mode
+
+```yaml
+type: custom:fanpy-card
+mode: fanpypro_direct
+name: "SALON"
+prefix: "ventilador_salon"
+fan_number: 1
+entity_fan: switch.shelly_salon
+entity_light: light.shelly_salon_luz
+has_light: true
+num_timers: 2
+timer1_entity: timer.ventilador_salon_timer_1
+timer1_label: "1h"
+timer2_entity: timer.ventilador_salon_timer_2
+timer2_label: "2h"
+```
 
 #### Fanpy Direct Mode
 
@@ -191,25 +242,25 @@ has_light_intensity: false
 
 | Option | Type | Default | Modes | Description |
 |--------|------|---------|-------|-------------|
-| `mode` | string | `"fanpy_remote"` | all | Card mode: `"fanpy_remote"`, `"fanpy_direct"`, `"helpers"`, or `"direct"` |
+| `mode` | string | `"fanpypro_remote"` | all | Card mode: `"fanpypro_remote"`, `"fanpypro_direct"`, `"fanpy_remote"`, `"fanpy_direct"`, `"helpers"`, or `"direct"` |
 | `name` | string | — | all | Display name for the fan (e.g., `SALÓN`) |
-| `prefix` | string | — | fanpy_remote, helpers, fanpy_direct | Entity ID prefix (e.g., `ventilador_salon`) |
-| `fan_number` | number | `1` | fanpy_remote, fanpy_direct | Fan number within an area (1–5) |
+| `prefix` | string | — | fanpypro_remote, fanpypro_direct, fanpy_remote, helpers, fanpy_direct | Entity ID prefix (e.g., `ventilador_salon`) |
+| `fan_number` | number | `1` | fanpypro_remote, fanpypro_direct, fanpy_remote, fanpy_direct | Fan number within an area (1–5) |
 | `entity_fan` | string | — | direct, fanpy_direct | Fan entity ID (e.g. `switch.lavabo_rosa_ventilador`) |
 | `entity_light` | string | — | direct, fanpy_direct | Light entity ID (e.g. `light.lavabo_rosa_luz`) |
 | `has_light` | boolean | `true` | all | Show/hide the light section |
-| `has_light_temperature` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide color temperature buttons |
-| `has_light_intensity` | boolean | `true` (helpers/fanpy_remote) / `false` (direct/fanpy_direct) | all | Show/hide brightness buttons |
+| `has_light_temperature` | boolean | `true` (helpers/fanpy_remote/fanpypro_remote) / `false` (direct/fanpy_direct/fanpypro_direct) | all | Show/hide color temperature buttons |
+| `has_light_intensity` | boolean | `true` (helpers/fanpy_remote/fanpypro_remote) / `false` (direct/fanpy_direct/fanpypro_direct) | all | Show/hide brightness buttons |
 | `has_ring` | boolean | `true` | all | Show/hide the SVG speed ring and status text. When disabled, only the speed number buttons are shown |
 | `has_animation` | boolean | `true` | all | Animate the fan blades inside the ring. Disabled automatically when `has_ring` is off |
-| `power_on_script` | string | — | fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
-| `power_off_script` | string | — | fanpy_remote, helpers | Override: power OFF script (default: `script.{prefix}_power_off`) |
-| `luz_on_script` | string | — | fanpy_remote, helpers | Override: light ON script (default: `script.{prefix}_luz_on`) |
-| `luz_off_script` | string | — | fanpy_remote, helpers | Override: light OFF script (default: `script.{prefix}_luz_off`) |
-| `luz_fria_script` | string | — | fanpy_remote, helpers | Override: cold light script (default: `script.{prefix}_luz_fria`) |
-| `luz_calida_script` | string | — | fanpy_remote, helpers | Override: warm light script (default: `script.{prefix}_luz_calida`) |
-| `intensidad_baja_script` | string | — | fanpy_remote, helpers | Override: dim down script (default: `script.{prefix}_intensidad_baja`) |
-| `intensidad_alta_script` | string | — | fanpy_remote, helpers | Override: dim up script (default: `script.{prefix}_intensidad_alta`) |
+| `power_on_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
+| `power_off_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: power OFF script (default: `script.{prefix}_power_off`) |
+| `luz_on_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: light ON script (default: `script.{prefix}_luz_on`) |
+| `luz_off_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: light OFF script (default: `script.{prefix}_luz_off`) |
+| `luz_fria_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: cold light script (default: `script.{prefix}_luz_fria`) |
+| `luz_calida_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: warm light script (default: `script.{prefix}_luz_calida`) |
+| `intensidad_baja_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: dim down script (default: `script.{prefix}_intensidad_baja`) |
+| `intensidad_alta_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: dim up script (default: `script.{prefix}_intensidad_alta`) |
 | `velocidad_{n}_script` | string | — | all | Override: speed {n} script (default: `script.{prefix}_velocidad_{n}`) |
 | `num_timers` | number | `3` | all | Number of timer buttons to show (0–3, read from `select.fanpy_<prefix>_num_timers` if available; falls back to this config value) |
 | `has_timer` | boolean | `true` | all | Show/hide the timer section (overridden by `num_timers` when 0) |
@@ -220,7 +271,7 @@ has_light_intensity: false
 | `timer2_label` | string | `"2h"` | all | Label for timer button 2 (calls `timer.start` on `timer2_entity`) |
 | `timer3_label` | string | `"4h"` | all | Label for timer button 3 (calls `timer.start` on `timer3_entity`) |
 
-### Auto-generated Entity & Script Names (Helpers / Fanpy Remote)
+### Auto-generated Entity & Script Names (Helpers / Fanpy Remote / Fanpy PRO Remote)
 
 If no override is specified, the card auto-generates names from the prefix:
 
@@ -228,8 +279,8 @@ If no override is specified, the card auto-generates names from the prefix:
 |--------|------------------|
 | Power state (helpers) | `input_boolean.{prefix}_power` |
 | Light state (helpers) | `input_boolean.{prefix}_luz` |
-| Fan entity (fanpy_remote) | `fan.fanpy_{prefix}` |
-| Light entity (fanpy_remote) | `light.fanpy_{prefix}_luz` |
+| Fan entity (fanpy_remote / fanpypro_remote) | `fan.{fanpy_prefix}{prefix}` |
+| Light entity (fanpy_remote / fanpypro_remote) | `light.{fanpy_prefix}{prefix}_luz` |
 | Speed selector | `{domain}.{fanpy_prefix}{prefix}_velocidad` |
 | Power sensor (helpers) | `binary_sensor.{prefix}_power` |
 | Light sensor (helpers) | `binary_sensor.{prefix}_luz` |
@@ -243,9 +294,9 @@ If no override is specified, the card auto-generates names from the prefix:
 | Dim up | `script.{prefix}_intensidad_alta` |
 | Speed 1–N | `script.{prefix}_velocidad_{1-N}` |
 
-Where `{fanpy_prefix}` is `fanpy_` for fanpy modes and empty for helpers mode.  
-Where `{domain}` is `input_select` (helpers) or `select` (fanpy modes).  
-In **Fanpy Remote**, `binary_sensor` entities are not created — the card reads `fan.fanpy_{prefix}` and `light.fanpy_{prefix}_luz` directly for state. In **Fanpy Direct**, the card reads `switch.*` and `light.*` specified via `entity_fan` / `entity_light`.
+Where `{fanpy_prefix}` is `fanpy_` for Fanpy modes, `fanpypro_` for Fanpy PRO modes, and empty for helpers mode.  
+Where `{domain}` is `input_select` (helpers) or `select` (fanpy / fanpypro modes).  
+In **Fanpy Remote** / **Fanpy PRO Remote**, `binary_sensor` entities are not created — the card reads `fan.{fanpy_prefix}{prefix}` and `light.{fanpy_prefix}{prefix}_luz` directly for state. In **Fanpy Direct** / **Fanpy PRO Direct**, the card reads `switch.*` and `light.*` specified via `entity_fan` / `entity_light`.
 
 ### Helpers Mode — Required Entities
 
@@ -256,7 +307,7 @@ For the card to work in Helpers mode you must manually create:
 - **`binary_sensor.{prefix}_power`** — tracks power sensor state
 - **`binary_sensor.{prefix}_luz`** — tracks light sensor state
 - **`input_select.{prefix}_velocidad`** — tracks speed, with options `1`, `2`, `3`, etc. (one per speed level)
-- All the **scripts** below (they send RF commands via Broadlink and update the helper entities)
+- All the **scripts** below (they send RF commands and update the helper entities)
 
 ### Helpers Mode — Scripts Example (Broadlink RF)
 
@@ -624,10 +675,10 @@ When a timer finishes naturally (countdown reaches zero), the card automatically
 
 | Mode | Handled by | Notes |
 |------|------------|-------|
-| **Fanpy Remote** / **Fanpy Direct** | Fanpy integration (backend) | Automatic — the integration listens for HA's `timer.finished` event and turns off the fan/switch. Works even if the card is not visible or the app is in the background. |
+| **Fanpy Remote** / **Fanpy Direct** / **Fanpy PRO Remote** / **Fanpy PRO Direct** | Fanpy / fanpypro integration (backend) | Automatic — the integration listens for HA's `timer.finished` event and turns off the fan/switch. Works even if the card is not visible or the app is in the background. |
 | **Helpers** / **Direct** | Card (frontend only) | The card detects the timer transition `active → idle` and calls the power-off action. Only works when the card is actively rendered and receiving state updates (card visible and app in foreground). |
 
-> For **Helpers** and **Direct** modes, it is recommended to create an HA automation so timer expiry works reliably regardless of card visibility:
+> For **Helpers** and **Direct** modes, it is recommended to create an HA automation so timer expiry works reliably regardless of card visibility. This is not needed for Fanpy or Fanpy PRO modes — the integration handles it automatically.
 > ```yaml
 > automation:
 >   - alias: "Apagar ventilador cuando timer finalice"

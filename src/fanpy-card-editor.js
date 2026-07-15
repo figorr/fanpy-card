@@ -50,9 +50,14 @@ class FanpyCardEditor extends HTMLElement {
   _detectFanpyConfigs(hass) {
     const configs = {};
     Object.keys(hass.states || {}).forEach(entityId => {
-      const m = entityId.match(/^select\.fanpy_ventilador_(.+)_velocidad$/);
+      let m = entityId.match(/^select\.(fanpy)_ventilador_(.+)_velocidad$/);
+      let ep = "fanpy";
+      if (!m) {
+        m = entityId.match(/^select\.(fanpypro)_ventilador_(.+)_velocidad$/);
+        ep = "fanpypro";
+      }
       if (!m) return;
-      let raw = m[1];
+      let raw = m[2];
       const parts = raw.split('_');
       const last = parseInt(parts[parts.length - 1], 10);
       let slug, fanNum;
@@ -66,10 +71,12 @@ class FanpyCardEditor extends HTMLElement {
       if (!configs[slug]) configs[slug] = { numbers: [], byNum: {} };
       if (!configs[slug].numbers.includes(fanNum)) configs[slug].numbers.push(fanNum);
       const attrs = hass.states[entityId]?.attributes || {};
+      const modeAttr = attrs[ep + "_mode"] || "remote";
       configs[slug].byNum[fanNum] = {
         entity_fan: attrs.entity_fan || "",
         entity_light: attrs.entity_light || "",
-        fanpy_mode: attrs.fanpy_mode || "remote",
+        fanpy_mode: modeAttr,
+        fanpy_prefix: ep,
       };
     });
     return configs;
@@ -78,7 +85,9 @@ class FanpyCardEditor extends HTMLElement {
   _numTimers() {
     const c = this._config;
     const pp = c.prefix || `ventilador_${this._slugify(c.name || "")}`;
-    const entityId = `select.fanpy_${pp}_num_timers`;
+    const mode = c.mode || "fanpypro_remote";
+    const ep = (mode === "fanpy_remote" || mode === "fanpy_direct") ? "fanpy" : "fanpypro";
+    const entityId = `select.${ep}_${pp}_num_timers`;
     const state = this._hass?.states?.[entityId]?.state;
     if (state !== undefined) return parseInt(state, 10) || 0;
     if (c.num_timers !== undefined) return parseInt(c.num_timers, 10) || 0;
@@ -119,11 +128,12 @@ class FanpyCardEditor extends HTMLElement {
       return;
     }
 
-    const mode = c.mode || "fanpy_remote";
+    const mode = c.mode || "fanpypro_remote";
+    const setup = mode.startsWith("fanpypro") ? "fanpypro" : mode.startsWith("fanpy") ? "fanpy" : "custom";
     const isHelpers = mode === "helpers";
     const isDirect = mode === "direct";
-    const isFanpyRemote = mode === "fanpy_remote";
-    const isFanpyDirect = mode === "fanpy_direct";
+    const isFanpyRemote = mode === "fanpy_remote" || mode === "fanpypro_remote";
+    const isFanpyDirect = mode === "fanpy_direct" || mode === "fanpypro_direct";
     const isFanpy = isFanpyRemote || isFanpyDirect;
     const isEntityMode = isDirect || isFanpyDirect;
 
@@ -148,14 +158,16 @@ class FanpyCardEditor extends HTMLElement {
     const fanpyAreas = areas.filter(([, a]) => {
       const cfg = fanpyConfigs[this._slugifyArea(a)];
       if (!cfg) return false;
-      return Object.values(cfg.byNum).some(fc => fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct"));
+      const expectedPrefix = setup === "fanpypro" ? "fanpypro" : "fanpy";
+      return Object.values(cfg.byNum).some(fc => fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct") && fc.fanpy_prefix === expectedPrefix);
     });
     const fanpySlug = currentId ? this._slugifyArea(hass.areas[currentId]) : null;
     const currentFanpyData = (fanpySlug && fanpyConfigs[fanpySlug]) || null;
     const currentFanpyFans = currentFanpyData
       ? currentFanpyData.numbers.filter(n => {
           const fc = currentFanpyData.byNum[n];
-          return fc && fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct");
+          const expectedPrefix = setup === "fanpypro" ? "fanpypro" : "fanpy";
+          return fc && fc.fanpy_mode === (isFanpyRemote ? "remote" : "direct") && fc.fanpy_prefix === expectedPrefix;
         })
       : [1];
 
@@ -226,14 +238,29 @@ class FanpyCardEditor extends HTMLElement {
 
       <div class="field-row">
         <div>
-          <span class="field-label">${L("mode")}</span>
-          <select id="mode-select">
-            <option value="fanpy_remote" ${isFanpyRemote ? "selected" : ""}>${L("mode_fanpy_remote")}</option>
-            <option value="fanpy_direct" ${isFanpyDirect ? "selected" : ""}>${L("mode_fanpy_direct")}</option>
-            <option value="helpers" ${isHelpers ? "selected" : ""}>${L("mode_helpers")}</option>
-            <option value="direct" ${isDirect ? "selected" : ""}>${L("mode_direct")}</option>
-          </select>
+          <span class="field-label">${L("setup")}</span>
+            <select id="setup-select">
+              <option value="fanpypro" ${setup === "fanpypro" ? "selected" : ""}>Fanpy PRO</option>
+              <option value="fanpy" ${setup === "fanpy" ? "selected" : ""}>Fanpy</option>
+              <option value="custom" ${setup === "custom" ? "selected" : ""}>Custom</option>
+            </select>
         </div>
+        <div>
+          <span class="field-label">${L("mode")}</span>
+            <select id="mode-select">
+              ${setup === "fanpypro" ? `
+              <option value="fanpypro_remote" ${mode === "fanpypro_remote" ? "selected" : ""}>${L("mode_fanpypro_remote")}</option>
+              <option value="fanpypro_direct" ${mode === "fanpypro_direct" ? "selected" : ""}>${L("mode_fanpypro_direct")}</option>
+              ` : setup === "fanpy" ? `
+              <option value="fanpy_remote" ${mode === "fanpy_remote" ? "selected" : ""}>${L("mode_fanpy_remote")}</option>
+              <option value="fanpy_direct" ${mode === "fanpy_direct" ? "selected" : ""}>${L("mode_fanpy_direct")}</option>
+              ` : `
+              <option value="helpers" ${mode === "helpers" ? "selected" : ""}>${L("mode_helpers")}</option>
+              <option value="direct" ${mode === "direct" ? "selected" : ""}>${L("mode_direct")}</option>
+              `}
+            </select>
+        </div>
+      </div>
       </div>
 
       <div id="fanpy-fields" style="display:${isFanpy ? "" : "none"}">
@@ -375,15 +402,30 @@ class FanpyCardEditor extends HTMLElement {
       </div>
     </div>`;
 
+    const setupSelect = root.getElementById("setup-select");
     const modeSelect = root.getElementById("mode-select");
     const fanpyFields = root.getElementById("fanpy-fields");
     const helpersFields = root.getElementById("helpers-fields");
     const directFields = root.getElementById("direct-fields");
 
+    setupSelect.addEventListener("change", () => {
+      const newSetup = setupSelect.value;
+      const modeMap = {
+        fanpypro: "fanpypro_remote",
+        fanpy: "fanpy_remote",
+        custom: "helpers",
+      };
+      this._config.mode = modeMap[newSetup] || "fanpypro_remote";
+      this._dispatch();
+      this._render();
+    });
+
     modeSelect.addEventListener("change", () => {
       const newMode = modeSelect.value;
       this._config.mode = newMode;
-      if (newMode === "direct" || newMode === "fanpy_direct") {
+      const isDirectMode = newMode === "direct" || newMode === "fanpy_direct" || newMode === "fanpypro_direct";
+      const isFanpyRemoteMode = newMode === "fanpy_remote" || newMode === "fanpypro_remote";
+      if (isDirectMode) {
         this._config.has_light_temperature = false;
         this._config.has_light_intensity = false;
         if (newMode === "direct") {
@@ -404,10 +446,10 @@ class FanpyCardEditor extends HTMLElement {
             }
           }
         }
-        fanpyFields.style.display = newMode === "fanpy_direct" ? "" : "none";
+        fanpyFields.style.display = (newMode === "fanpy_direct" || newMode === "fanpypro_direct") ? "" : "none";
         helpersFields.style.display = "none";
         directFields.style.display = "";
-      } else if (newMode === "fanpy_remote") {
+      } else if (isFanpyRemoteMode) {
         delete this._config.entity_fan;
         delete this._config.entity_light;
         if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
@@ -444,24 +486,28 @@ class FanpyCardEditor extends HTMLElement {
       this._config.name = area.name.toUpperCase();
       this._config.prefix = newPrefix;
       this._config.fan_number = n;
-      // Auto-populate entity_fan/entity_light for fanpy_direct
-      if (isFanpyDirect) {
-        const fc = fanpyConfigs[slug]?.byNum?.[n];
-        if (fc) {
-          if (fc.entity_fan) this._config.entity_fan = fc.entity_fan;
-          else delete this._config.entity_fan;
-          if (fc.entity_light) {
-            this._config.entity_light = fc.entity_light;
-            if (this._config.has_light === undefined || this._config.has_light === false) {
-              this._config.has_light = true;
-            }
-          } else {
-            delete this._config.entity_light;
-            this._config.has_light = false;
+      // Detect entity prefix from config and set mode
+      const fc = fanpyConfigs[slug]?.byNum?.[n];
+      const detectedPrefix = fc?.fanpy_prefix || "fanpy";
+      if (isFanpyDirect || isFanpyRemote) {
+        const modePrefix = isFanpyDirect ? "direct" : "remote";
+        this._config.mode = `${detectedPrefix}_${modePrefix}`;
+      }
+      // Auto-populate entity_fan/entity_light for direct modes
+      if (isFanpyDirect && fc) {
+        if (fc.entity_fan) this._config.entity_fan = fc.entity_fan;
+        else delete this._config.entity_fan;
+        if (fc.entity_light) {
+          this._config.entity_light = fc.entity_light;
+          if (this._config.has_light === undefined || this._config.has_light === false) {
+            this._config.has_light = true;
           }
-          delete this._config.has_light_temperature;
-          delete this._config.has_light_intensity;
+        } else {
+          delete this._config.entity_light;
+          this._config.has_light = false;
         }
+        delete this._config.has_light_temperature;
+        delete this._config.has_light_intensity;
       }
       this._dispatch();
       this._render();
