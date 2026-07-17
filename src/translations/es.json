@@ -41,6 +41,7 @@
   "has_animation": "Animación anillo",
   "mode": "Modo",
   "setup": "Configuración",
+  "mode_fanpypro_hybrid": "Fanpy Pro Híbrido (RF + Broadlink)",
   "mode_fanpypro_remote": "Fanpy Pro Remoto (Gateway RF)",
   "mode_fanpypro_direct": "Fanpy Pro Directo (switch.* / light.*)",
   "mode_fanpy_remote": "Fanpy Remoto (Broadlink RF)",

@@ -41,6 +41,7 @@
   "has_animation": "Animació anell",
   "mode": "Mode",
   "setup": "Configuració",
+  "mode_fanpypro_hybrid": "Fanpy Pro Híbrid (RF + Broadlink)",
   "mode_fanpypro_remote": "Fanpy Pro Remot (Gateway RF)",
   "mode_fanpypro_direct": "Fanpy Pro Directe (switch.* / light.*)",
   "mode_fanpy_remote": "Fanpy Remot (Broadlink RF)",

@@ -41,6 +41,7 @@
   "has_animation": "Ring animation",
   "mode": "Mode",
   "setup": "Setup",
+  "mode_fanpypro_hybrid": "Fanpy Pro Hybrid (RF + Broadlink)",
   "mode_fanpypro_remote": "Fanpy Pro Remote (Gateway RF)",
   "mode_fanpypro_direct": "Fanpy Pro Direct (switch.* / light.*)",
   "mode_fanpy_remote": "Fanpy Remote (Broadlink RF)",
