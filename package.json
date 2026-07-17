@@ -1,6 +1,6 @@
 {
   "name": "fanpy-card",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "type": "module",
   "description": "Fanpy card to control ceiling fans with light and speed",
   "main": "dist/fanpy-card.js",

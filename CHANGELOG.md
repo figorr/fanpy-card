@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/figorr/fanpy-card/compare/v3.0.2...v3.1.0) (2026-07-17)
+
+
+### Features
+
+* include hybrid Fanpy Pro mode ([d634875](https://github.com/figorr/fanpy-card/commit/d634875eeabe67d8d834987ac7a2c030ca9f49ef))
+
 ## [3.0.2](https://github.com/figorr/fanpy-card/compare/v3.0.1...v3.0.2) (2026-07-15)
 
 
