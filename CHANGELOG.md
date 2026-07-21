@@ -1,3 +1,10 @@
+## [3.1.2](https://github.com/figorr/fanpy-card/compare/v3.1.1...v3.1.2) (2026-07-21)
+
+
+### Bug Fixes
+
+* fix light resync translation ([82ac1b0](https://github.com/figorr/fanpy-card/commit/82ac1b0d335eba33bc6a962f3c7665f449cab3e1))
+
 ## [3.1.1](https://github.com/figorr/fanpy-card/compare/v3.1.0...v3.1.1) (2026-07-21)
 
 
