@@ -1,3 +1,10 @@
+## [3.1.1](https://github.com/figorr/fanpy-card/compare/v3.1.0...v3.1.1) (2026-07-21)
+
+
+### Bug Fixes
+
+* add resync light button for fanpypro gateway rf and hybrid modes ([3d267ba](https://github.com/figorr/fanpy-card/commit/3d267ba4cd32d253f14efab2ebac3c6352cda458))
+
 # [3.1.0](https://github.com/figorr/fanpy-card/compare/v3.0.2...v3.1.0) (2026-07-17)
 
 
