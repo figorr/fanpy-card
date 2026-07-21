@@ -536,6 +536,11 @@ class FanpyCard extends HTMLElement {
         p = this._callService("timer", "start", { entity_id: te });
         break;
       }
+      case "resync": {
+        const buttonEntity = `button.${ep}_${config.prefix}_resync_luz`;
+        p = this._callService("button", "press", { entity_id: buttonEntity });
+        break;
+      }
     }
     return p;
   }
@@ -687,6 +692,8 @@ class FanpyCard extends HTMLElement {
     const hasLight = config.has_light !== false;
     const hasTemp = hasLight && config.has_light_temperature !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
+    const canHaveResync = this._mode() === "fanpypro_remote" || this._mode() === "fanpypro_hybrid";
+    const hasResync = canHaveResync && hasLight && config.has_light_resync !== false;
     const hasRing = config.has_ring !== false;
     const hasAnim = config.has_animation !== false;
     const hasTimer = config.has_timer !== false;
@@ -759,6 +766,16 @@ class FanpyCard extends HTMLElement {
             </button>
             <button class="ctrl" data-cmd="intensidad_alta">
               <ha-icon icon="mdi:plus"></ha-icon>
+            </button>
+          </div>
+          ` : ""}
+
+          ${hasResync ? `
+          <div class="row-label">${t(this._hass, "resync")}</div>
+          <div class="btn-row">
+            <button class="ctrl" data-cmd="resync">
+              <ha-icon icon="mdi:sync"></ha-icon>
+              <span class="lbl">${t(this._hass, "resync")}</span>
             </button>
           </div>
           ` : ""}

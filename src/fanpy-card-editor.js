@@ -193,6 +193,8 @@ class FanpyCardEditor extends HTMLElement {
     const hasLight = canHaveLight ? (c.has_light !== false) : false;
     const hasTemp = isEntityMode ? (c.has_light_temperature === true && hasLight) : (c.has_light_temperature !== false);
     const hasInt = isEntityMode ? (c.has_light_intensity === true && hasLight) : (c.has_light_intensity !== false);
+    const canHaveResync = isFanpyRemote && setup === "fanpypro";
+    const hasResync = canHaveResync ? (c.has_light_resync !== false) : false;
     const hasRing = c.has_ring !== false;
     const hasAnim = c.has_animation !== false;
     const timerEntities = Object.keys(hass.states || {})
@@ -388,6 +390,17 @@ class FanpyCardEditor extends HTMLElement {
             </label>
             <label for="tog-int" class="${!hasLight ? "disabled" : ""}">${L("has_light_intensity")}</label>
         </div>
+
+          ${canHaveResync ? `
+          <div class="toggle-row indent">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-resync" ${hasResync && hasLight ? "checked" : ""} ${!hasLight ? "disabled" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-resync" class="${!hasLight ? "disabled" : ""}">${L("has_light_resync")}</label>
+          </div>
+          ` : ""}
 
           <div class="toggle-row">
             <label class="toggle-switch">
@@ -586,6 +599,7 @@ class FanpyCardEditor extends HTMLElement {
     const cbLight = root.getElementById("tog-light");
     const cbTemp = root.getElementById("tog-temp");
     const cbInt = root.getElementById("tog-int");
+    const cbResync = root.getElementById("tog-resync");
     const cbRing = root.getElementById("tog-ring");
     const cbAnim = root.getElementById("tog-anim");
 
@@ -607,6 +621,11 @@ class FanpyCardEditor extends HTMLElement {
         cbInt.disabled = !enabled;
         if (!enabled) cbInt.checked = false;
         toggleLabel(cbInt);
+      }
+      if (cbResync) {
+        cbResync.disabled = !enabled;
+        if (!enabled) cbResync.checked = false;
+        toggleLabel(cbResync);
       }
     };
 
@@ -654,6 +673,7 @@ class FanpyCardEditor extends HTMLElement {
       if (cbLight) this._config.has_light = cbLight.checked;
       if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
+      if (cbResync) this._config.has_light_resync = cbLight.checked && cbResync.checked;
       if (cbRing) this._config.has_ring = cbRing.checked;
       if (cbAnim) this._config.has_animation = cbRing.checked && cbAnim.checked;
       if (cbTimer) {
@@ -673,6 +693,7 @@ class FanpyCardEditor extends HTMLElement {
     }
     if (cbTemp) cbTemp.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
+    if (cbResync) cbResync.addEventListener("change", saveToggles);
     if (cbRing) {
       cbRing.addEventListener("change", () => {
         syncAnimToggle();

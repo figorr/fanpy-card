@@ -37,6 +37,7 @@
   "has_light": "Tiene luz",
   "has_light_temperature": "Temperatura de color",
   "has_light_intensity": "Intensidad de luz",
+  "has_light_resync": "Resincronización",
   "has_ring": "Anillo velocidad",
   "has_animation": "Animación anillo",
   "mode": "Modo",
@@ -54,5 +55,6 @@
   "entity_hint": "Escribe una ID de entidad o selecciona de las sugerencias",
   "ventilator": "Ventilador",
   "has_timer": "Temporizador",
-  "timer": "Temporizador"
+  "timer": "Temporizador",
+  "resync": "Resincronizar"
 }

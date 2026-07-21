@@ -37,6 +37,7 @@
   "has_light": "Has light",
   "has_light_temperature": "Light temperature",
   "has_light_intensity": "Light intensity",
+  "has_light_resync": "Light resync",
   "has_ring": "Speed ring",
   "has_animation": "Ring animation",
   "mode": "Mode",
@@ -54,5 +55,6 @@
   "entity_hint": "Type an entity ID or select from suggestions",
   "ventilator": "Ventilator",
   "has_timer": "Timer",
-  "timer": "Timer"
+  "timer": "Timer",
+  "resync": "Resync"
 }

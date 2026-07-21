@@ -37,6 +37,7 @@
   "has_light": "Té llum",
   "has_light_temperature": "Temperatura de color",
   "has_light_intensity": "Intensitat de llum",
+  "has_light_resync": "Resincronització",
   "has_ring": "Anell velocitat",
   "has_animation": "Animació anell",
   "mode": "Mode",
@@ -54,5 +55,6 @@
   "entity_hint": "Escriu una ID d'entitat o selecciona de les suggerències",
   "ventilator": "Ventilador",
   "has_timer": "Temporitzador",
-  "timer": "Temporitzador"
+  "timer": "Temporitzador",
+  "resync": "Resincronitzar"
 }
