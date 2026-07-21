@@ -56,5 +56,5 @@
   "ventilator": "Ventilator",
   "has_timer": "Timer",
   "timer": "Timer",
-  "resync": "Resync"
+  "resync": "Light resync"
 }
