@@ -33,6 +33,7 @@ The card evolved to support multiple setups:
 - ✅ **Speed buttons** synchronized with the ring — tap for quick speed selection
 - ✅ Spinning fan animation with speed-dependent rotation
 - ✅ **Timer section** — up to 3 configurable timer buttons with editable labels. Uses native `timer.start`/`timer.cancel` services. Button count dynamically read from `select.{fanpy_prefix}<prefix>_num_timers` (e.g., `select.fanpypro_ventilador_salon_num_timers`, set via the integration config flow).
+- ✅ **Light resync button** (Fanpy PRO Remote / Hybrid only) — a `button.fanpypro_{prefix}_resync_luz` button that toggles the light entity state in HA without sending any RF command. Useful when the physical remote was used during a restart, causing the light entity state to desync. Enable via the *Resincronización* toggle (only visible when *Has light* is on and mode is Fanpy PRO Remote or Hybrid).
 - ✅ **Rollback** on failed commands — ring returns to previous position if the service/script call fails
 - ✅ **Entity validation** before calling services — rejects non-existent entities immediately
 - ✅ Visual editor with mode selector, area dropdown, fan number, toggle switches, and timer labels
@@ -95,7 +96,8 @@ Works with the [fanpypro integration](https://github.com/figorr/fanpypro) using 
    - **Hybrid** — CC1101 receives (syncs with physical remote), Broadlink transmits
    - **Direct** — uses `switch.*` / `light.*` entities
 3. In **Direct** mode, entities are auto-populated from the config flow
-4. Configure toggle switches (light, temperature, intensity, ring, timer)
+4. Configure toggle switches (light, temperature, intensity, ring, timer, resync)
+   - The **Resincronización** toggle only appears in Fanpy PRO Remote and Hybrid modes, and only when *Has light* is enabled
 
 #### Setup: Fanpy
 
@@ -166,6 +168,7 @@ fan_number: 1
 has_light: true
 has_light_temperature: true
 has_light_intensity: true
+has_light_resync: true
 num_timers: 3
 timer1_entity: timer.ventilador_salon_timer_1
 timer1_label: "1h"
@@ -186,6 +189,7 @@ fan_number: 1
 has_light: true
 has_light_temperature: true
 has_light_intensity: true
+has_light_resync: true
 num_timers: 3
 timer1_entity: timer.ventilador_salon_timer_1
 timer1_label: "1h"
@@ -276,6 +280,7 @@ has_light_intensity: false
 | `has_light` | boolean | `true` | all | Show/hide the light section |
 | `has_light_temperature` | boolean | `true` (helpers/fanpy_remote/fanpypro_remote/fanpypro_hybrid) / `false` (direct/fanpy_direct/fanpypro_direct) | all | Show/hide color temperature buttons |
 | `has_light_intensity` | boolean | `true` (helpers/fanpy_remote/fanpypro_remote/fanpypro_hybrid) / `false` (direct/fanpy_direct/fanpypro_direct) | all | Show/hide brightness buttons |
+| `has_light_resync` | boolean | `true` | fanpypro_remote, fanpypro_hybrid | Show/hide the light resync button. Calls `button.press` on `button.fanpypro_{prefix}_resync_luz` (no RF command sent). Only available for Fanpy PRO Remote/Hybrid modes |
 | `has_ring` | boolean | `true` | all | Show/hide the SVG speed ring and status text. When disabled, only the speed number buttons are shown |
 | `has_animation` | boolean | `true` | all | Animate the fan blades inside the ring. Disabled automatically when `has_ring` is off |
 | `power_on_script` | string | — | fanpypro_remote, fanpy_remote, helpers | Override: power ON script (default: `script.{prefix}_power_on`) |
@@ -682,6 +687,9 @@ The card renders a compact control panel with an SVG speed ring. Example layout 
 │                             │
 │ INTENSIDAD LUZ              │
 │     [−]         [+]         │
+│                             │
+│ RESINCRONIZACIÓN            │
+│     [🔄 Resincronizar]      │
 │                             │
 │ TIMER                       │
 │    [1h]   [2h]   [4h]       │
