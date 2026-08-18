@@ -192,6 +192,9 @@ class FanpyCardEditor extends HTMLElement {
 
     const hasLight = canHaveLight ? (c.has_light !== false) : false;
     const hasTemp = isEntityMode ? (c.has_light_temperature === true && hasLight) : (c.has_light_temperature !== false);
+    const hasTempCalida = hasTemp && c.has_light_temperature_calida !== false;
+    const hasTempNeutra = hasTemp && c.has_light_temperature_neutra === true;
+    const hasTempFria = hasTemp && c.has_light_temperature_fria !== false;
     const hasInt = isEntityMode ? (c.has_light_intensity === true && hasLight) : (c.has_light_intensity !== false);
     const canHaveResync = isFanpyRemote && setup === "fanpypro";
     const hasResync = canHaveResync ? (c.has_light_resync !== false) : false;
@@ -221,6 +224,7 @@ class FanpyCardEditor extends HTMLElement {
       .toggle-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
       .toggle-row + .toggle-row { margin-top: 2px; }
       .toggle-row.indent { margin-left: 24px; }
+      .toggle-row.indent2 { margin-left: 48px; }
       .toggle-row label { font-size: 13px; cursor: pointer; user-select: none; color: var(--primary-text-color, #212121); }
       .toggle-row label.disabled { opacity: 0.35; cursor: not-allowed; }
       .toggle-switch {
@@ -382,6 +386,33 @@ class FanpyCardEditor extends HTMLElement {
             <label for="tog-temp" class="${!hasLight ? "disabled" : ""}">${L("has_light_temperature")}</label>
           </div>
 
+          <div class="toggle-row indent2">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-temp-calida" ${hasTempCalida && hasLight ? "checked" : ""} ${!hasTemp || !hasLight ? "disabled" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-temp-calida" class="${!hasTemp || !hasLight ? "disabled" : ""}">${L("has_light_temperature_calida")}</label>
+          </div>
+
+          <div class="toggle-row indent2">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-temp-neutra" ${hasTempNeutra && hasLight ? "checked" : ""} ${!hasTemp || !hasLight ? "disabled" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-temp-neutra" class="${!hasTemp || !hasLight ? "disabled" : ""}">${L("has_light_temperature_neutra")}</label>
+          </div>
+
+          <div class="toggle-row indent2">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-temp-fria" ${hasTempFria && hasLight ? "checked" : ""} ${!hasTemp || !hasLight ? "disabled" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-temp-fria" class="${!hasTemp || !hasLight ? "disabled" : ""}">${L("has_light_temperature_fria")}</label>
+          </div>
+
           <div class="toggle-row indent">
             <label class="toggle-switch">
               <input type="checkbox" id="tog-int" ${hasInt && hasLight ? "checked" : ""} ${!hasLight ? "disabled" : ""}>
@@ -451,6 +482,9 @@ class FanpyCardEditor extends HTMLElement {
       const isFanpyRemoteMode = newMode === "fanpy_remote" || newMode === "fanpypro_remote" || newMode === "fanpypro_hybrid";
       if (isDirectMode) {
         this._config.has_light_temperature = false;
+        this._config.has_light_temperature_calida = false;
+        this._config.has_light_temperature_neutra = false;
+        this._config.has_light_temperature_fria = false;
         this._config.has_light_intensity = false;
         if (newMode === "direct") {
           delete this._config.name;
@@ -476,7 +510,12 @@ class FanpyCardEditor extends HTMLElement {
       } else if (isFanpyRemoteMode) {
         delete this._config.entity_fan;
         delete this._config.entity_light;
-        if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
+        if (this._config.has_light_temperature === false) {
+          delete this._config.has_light_temperature;
+          delete this._config.has_light_temperature_calida;
+          delete this._config.has_light_temperature_neutra;
+          delete this._config.has_light_temperature_fria;
+        }
         if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
         fanpyFields.style.display = "";
         helpersFields.style.display = "none";
@@ -486,7 +525,12 @@ class FanpyCardEditor extends HTMLElement {
         delete this._config.entity_light;
         delete this._config.name;
         delete this._config.prefix;
-        if (this._config.has_light_temperature === false) delete this._config.has_light_temperature;
+        if (this._config.has_light_temperature === false) {
+          delete this._config.has_light_temperature;
+          delete this._config.has_light_temperature_calida;
+          delete this._config.has_light_temperature_neutra;
+          delete this._config.has_light_temperature_fria;
+        }
         if (this._config.has_light_intensity === false) delete this._config.has_light_intensity;
         fanpyFields.style.display = "none";
         helpersFields.style.display = "";
@@ -532,6 +576,9 @@ class FanpyCardEditor extends HTMLElement {
           this._config.has_light = false;
         }
         delete this._config.has_light_temperature;
+        delete this._config.has_light_temperature_calida;
+        delete this._config.has_light_temperature_neutra;
+        delete this._config.has_light_temperature_fria;
         delete this._config.has_light_intensity;
       }
       this._dispatch();
@@ -598,6 +645,9 @@ class FanpyCardEditor extends HTMLElement {
 
     const cbLight = root.getElementById("tog-light");
     const cbTemp = root.getElementById("tog-temp");
+    const cbTempCalida = root.getElementById("tog-temp-calida");
+    const cbTempNeutra = root.getElementById("tog-temp-neutra");
+    const cbTempFria = root.getElementById("tog-temp-fria");
     const cbInt = root.getElementById("tog-int");
     const cbResync = root.getElementById("tog-resync");
     const cbRing = root.getElementById("tog-ring");
@@ -616,6 +666,22 @@ class FanpyCardEditor extends HTMLElement {
         cbTemp.disabled = !enabled;
         if (!enabled) cbTemp.checked = false;
         toggleLabel(cbTemp);
+      }
+      const tempEnabled = cbTemp && cbTemp.checked;
+      if (cbTempCalida) {
+        cbTempCalida.disabled = !tempEnabled;
+        if (!tempEnabled) cbTempCalida.checked = false;
+        toggleLabel(cbTempCalida);
+      }
+      if (cbTempNeutra) {
+        cbTempNeutra.disabled = !tempEnabled;
+        if (!tempEnabled) cbTempNeutra.checked = false;
+        toggleLabel(cbTempNeutra);
+      }
+      if (cbTempFria) {
+        cbTempFria.disabled = !tempEnabled;
+        if (!tempEnabled) cbTempFria.checked = false;
+        toggleLabel(cbTempFria);
       }
       if (cbInt) {
         cbInt.disabled = !enabled;
@@ -672,6 +738,9 @@ class FanpyCardEditor extends HTMLElement {
     const saveToggles = () => {
       if (cbLight) this._config.has_light = cbLight.checked;
       if (cbTemp) this._config.has_light_temperature = cbLight.checked && cbTemp.checked;
+      if (cbTempCalida) this._config.has_light_temperature_calida = cbLight.checked && cbTemp && cbTemp.checked && cbTempCalida.checked;
+      if (cbTempNeutra) this._config.has_light_temperature_neutra = cbLight.checked && cbTemp && cbTemp.checked && cbTempNeutra.checked;
+      if (cbTempFria) this._config.has_light_temperature_fria = cbLight.checked && cbTemp && cbTemp.checked && cbTempFria.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
       if (cbResync) this._config.has_light_resync = cbLight.checked && cbResync.checked;
       if (cbRing) this._config.has_ring = cbRing.checked;
@@ -691,7 +760,15 @@ class FanpyCardEditor extends HTMLElement {
         saveToggles();
       });
     }
-    if (cbTemp) cbTemp.addEventListener("change", saveToggles);
+    if (cbTemp) {
+      cbTemp.addEventListener("change", () => {
+        syncSubToggles();
+        saveToggles();
+      });
+    }
+    if (cbTempCalida) cbTempCalida.addEventListener("change", saveToggles);
+    if (cbTempNeutra) cbTempNeutra.addEventListener("change", saveToggles);
+    if (cbTempFria) cbTempFria.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
     if (cbResync) cbResync.addEventListener("change", saveToggles);
     if (cbRing) {

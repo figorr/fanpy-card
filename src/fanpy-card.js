@@ -490,6 +490,11 @@ class FanpyCard extends HTMLElement {
           ? this._callService("light", "turn_on", { entity_id: config.entity_light, color_temp: 153 })
           : this._call(scriptFor("luz_fria_script", "luz_fria"));
         break;
+      case "luz_neutra":
+        p = isDirect
+          ? this._callService("light", "turn_on", { entity_id: config.entity_light, color_temp: 350 })
+          : this._call(scriptFor("luz_neutra_script", "luz_neutra"));
+        break;
       case "luz_calida":
         p = isDirect
           ? this._callService("light", "turn_on", { entity_id: config.entity_light, color_temp: 500 })
@@ -691,6 +696,9 @@ class FanpyCard extends HTMLElement {
 
     const hasLight = config.has_light !== false;
     const hasTemp = hasLight && config.has_light_temperature !== false;
+    const hasTempFria = hasTemp && config.has_light_temperature_fria !== false;
+    const hasTempNeutra = hasTemp && config.has_light_temperature_neutra === true;
+    const hasTempCalida = hasTemp && config.has_light_temperature_calida !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
     const canHaveResync = this._mode() === "fanpypro_remote" || this._mode() === "fanpypro_hybrid";
     const hasResync = canHaveResync && hasLight && config.has_light_resync !== false;
@@ -747,14 +755,21 @@ class FanpyCard extends HTMLElement {
           ${hasTemp ? `
           <div class="row-label">${t(this._hass, "temperatura")}</div>
           <div class="btn-row">
+            ${hasTempFria ? `
             <button class="ctrl" data-cmd="luz_fria">
               <ha-icon icon="mdi:snowflake"></ha-icon>
               <span class="lbl">${t(this._hass, "fria")}</span>
-            </button>
+            </button>` : ""}
+            ${hasTempNeutra ? `
+            <button class="ctrl" data-cmd="luz_neutra">
+              <ha-icon icon="mdi:circle-half-full"></ha-icon>
+              <span class="lbl">${t(this._hass, "neutra")}</span>
+            </button>` : ""}
+            ${hasTempCalida ? `
             <button class="ctrl" data-cmd="luz_calida">
               <ha-icon icon="mdi:white-balance-sunny"></ha-icon>
               <span class="lbl">${t(this._hass, "calida")}</span>
-            </button>
+            </button>` : ""}
           </div>
           ` : ""}
 
