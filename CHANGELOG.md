@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/figorr/fanpy-card/compare/v3.1.2...v3.2.0) (2026-08-18)
+
+
+### Features
+
+* add neutral light temperature mode ([2ab09d9](https://github.com/figorr/fanpy-card/commit/2ab09d9123601225de0ca6a5b6fcba20dda99bbc))
+
 ## [3.1.2](https://github.com/figorr/fanpy-card/compare/v3.1.1...v3.1.2) (2026-07-21)
 
 
