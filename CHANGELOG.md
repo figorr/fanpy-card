@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/figorr/fanpy-card/compare/v3.2.0...v3.3.0) (2026-08-19)
+
+
+### Features
+
+* add fan resync button before timer section ([da77d49](https://github.com/figorr/fanpy-card/commit/da77d49778d5be7c0359e14e635f8d0e04d80a78))
+
 # [3.2.0](https://github.com/figorr/fanpy-card/compare/v3.1.2...v3.2.0) (2026-08-18)
 
 
