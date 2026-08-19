@@ -42,6 +42,7 @@
   "has_light_temperature_fria": "Modo luz fría",
   "has_light_intensity": "Intensidad de luz",
   "has_light_resync": "Resincronización",
+  "has_fan_resync": "Resincronizar ventilador",
   "has_ring": "Anillo velocidad",
   "has_animation": "Animación anillo",
   "mode": "Modo",
@@ -60,5 +61,6 @@
   "ventilator": "Ventilador",
   "has_timer": "Temporizador",
   "timer": "Temporizador",
-  "resync": "Resincronizar luz"
+  "resync": "Resincronizar luz",
+  "resync_fan": "Resincronizar ventilador"
 }

@@ -42,6 +42,7 @@
   "has_light_temperature_fria": "Mode llum freda",
   "has_light_intensity": "Intensitat de llum",
   "has_light_resync": "Resincronització",
+  "has_fan_resync": "Resincronitzar ventilador",
   "has_ring": "Anell velocitat",
   "has_animation": "Animació anell",
   "mode": "Mode",
@@ -60,5 +61,6 @@
   "ventilator": "Ventilador",
   "has_timer": "Temporitzador",
   "timer": "Temporitzador",
-  "resync": "Resincronitzar llum"
+  "resync": "Resincronitzar llum",
+  "resync_fan": "Resincronitzar ventilador"
 }

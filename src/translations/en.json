@@ -42,6 +42,7 @@
   "has_light_temperature_fria": "Cool light mode",
   "has_light_intensity": "Light intensity",
   "has_light_resync": "Light resync",
+  "has_fan_resync": "Fan resync",
   "has_ring": "Speed ring",
   "has_animation": "Ring animation",
   "mode": "Mode",
@@ -60,5 +61,6 @@
   "ventilator": "Ventilator",
   "has_timer": "Timer",
   "timer": "Timer",
-  "resync": "Light resync"
+  "resync": "Light resync",
+  "resync_fan": "Fan resync"
 }

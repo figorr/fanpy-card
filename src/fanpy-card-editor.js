@@ -198,6 +198,7 @@ class FanpyCardEditor extends HTMLElement {
     const hasInt = isEntityMode ? (c.has_light_intensity === true && hasLight) : (c.has_light_intensity !== false);
     const canHaveResync = isFanpyRemote && setup === "fanpypro";
     const hasResync = canHaveResync ? (c.has_light_resync !== false) : false;
+    const hasFanResync = canHaveResync ? (c.has_fan_resync !== false) : false;
     const hasRing = c.has_ring !== false;
     const hasAnim = c.has_animation !== false;
     const timerEntities = Object.keys(hass.states || {})
@@ -433,6 +434,17 @@ class FanpyCardEditor extends HTMLElement {
           </div>
           ` : ""}
 
+          ${canHaveResync ? `
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="tog-resync-fan" ${hasFanResync ? "checked" : ""}>
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </label>
+            <label for="tog-resync-fan">${L("has_fan_resync")}</label>
+          </div>
+          ` : ""}
+
           <div class="toggle-row">
             <label class="toggle-switch">
               <input type="checkbox" id="tog-timer" ${c.has_timer !== false ? "checked" : ""} ${this._numTimers() === 0 ? "disabled" : ""}>
@@ -650,6 +662,7 @@ class FanpyCardEditor extends HTMLElement {
     const cbTempFria = root.getElementById("tog-temp-fria");
     const cbInt = root.getElementById("tog-int");
     const cbResync = root.getElementById("tog-resync");
+    const cbResyncFan = root.getElementById("tog-resync-fan");
     const cbRing = root.getElementById("tog-ring");
     const cbAnim = root.getElementById("tog-anim");
 
@@ -743,6 +756,7 @@ class FanpyCardEditor extends HTMLElement {
       if (cbTempFria) this._config.has_light_temperature_fria = cbLight.checked && cbTemp && cbTemp.checked && cbTempFria.checked;
       if (cbInt) this._config.has_light_intensity = cbLight.checked && cbInt.checked;
       if (cbResync) this._config.has_light_resync = cbLight.checked && cbResync.checked;
+      if (cbResyncFan) this._config.has_fan_resync = cbResyncFan.checked;
       if (cbRing) this._config.has_ring = cbRing.checked;
       if (cbAnim) this._config.has_animation = cbRing.checked && cbAnim.checked;
       if (cbTimer) {
@@ -771,6 +785,7 @@ class FanpyCardEditor extends HTMLElement {
     if (cbTempFria) cbTempFria.addEventListener("change", saveToggles);
     if (cbInt) cbInt.addEventListener("change", saveToggles);
     if (cbResync) cbResync.addEventListener("change", saveToggles);
+    if (cbResyncFan) cbResyncFan.addEventListener("change", saveToggles);
     if (cbRing) {
       cbRing.addEventListener("change", () => {
         syncAnimToggle();
