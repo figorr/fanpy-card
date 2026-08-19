@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/figorr/fanpy-card/compare/v3.3.0...v3.4.0) (2026-08-19)
+
+
+### Features
+
+* enable fan and light resync buttons for fanpy setup ([6c7a8d7](https://github.com/figorr/fanpy-card/commit/6c7a8d774e050640370d48d510b9f7fd1c99429a))
+
 # [3.3.0](https://github.com/figorr/fanpy-card/compare/v3.2.0...v3.3.0) (2026-08-19)
 
 
