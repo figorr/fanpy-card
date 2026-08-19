@@ -196,7 +196,7 @@ class FanpyCardEditor extends HTMLElement {
     const hasTempNeutra = hasTemp && c.has_light_temperature_neutra === true;
     const hasTempFria = hasTemp && c.has_light_temperature_fria !== false;
     const hasInt = isEntityMode ? (c.has_light_intensity === true && hasLight) : (c.has_light_intensity !== false);
-    const canHaveResync = isFanpyRemote && setup === "fanpypro";
+    const canHaveResync = isFanpyRemote && (setup === "fanpypro" || setup === "fanpy");
     const hasResync = canHaveResync ? (c.has_light_resync !== false) : false;
     const hasFanResync = canHaveResync ? (c.has_fan_resync !== false) : false;
     const hasRing = c.has_ring !== false;

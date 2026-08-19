@@ -705,7 +705,7 @@ class FanpyCard extends HTMLElement {
     const hasTempNeutra = hasTemp && config.has_light_temperature_neutra === true;
     const hasTempCalida = hasTemp && config.has_light_temperature_calida !== false;
     const hasInt = hasLight && config.has_light_intensity !== false;
-    const canHaveResync = this._mode() === "fanpypro_remote" || this._mode() === "fanpypro_hybrid";
+    const canHaveResync = this._mode() === "fanpy_remote" || this._mode() === "fanpypro_remote" || this._mode() === "fanpypro_hybrid";
     const hasResync = canHaveResync && hasLight && config.has_light_resync !== false;
     const hasFanResync = canHaveResync && config.has_fan_resync !== false;
     const hasRing = config.has_ring !== false;
