@@ -378,7 +378,7 @@ class FanpyCard extends HTMLElement {
 
   _callService(domain, service, data) {
     if (!this._hass) return Promise.reject(new Error("no hass"));
-    if (data && data.entity_id && !this._hass.states[data.entity_id]) {
+    if (domain !== "button" && data && data.entity_id && !this._hass.states[data.entity_id]) {
       return Promise.reject(new Error(`entity not found: ${data.entity_id}`));
     }
     return this._hass.callService(domain, service, data).catch((e) => {
