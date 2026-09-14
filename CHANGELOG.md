@@ -1,3 +1,10 @@
+## [3.4.1](https://github.com/figorr/fanpy-card/compare/v3.4.0...v3.4.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* skip entity existence check for button service calls ([13b4c73](https://github.com/figorr/fanpy-card/commit/13b4c736d3fd7b4d7508288d91f27dd46d1eeb23))
+
 # [3.4.0](https://github.com/figorr/fanpy-card/compare/v3.3.0...v3.4.0) (2026-08-19)
 
 
